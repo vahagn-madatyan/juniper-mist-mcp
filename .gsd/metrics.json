@@ -19,6 +19,24 @@
       "toolCalls": 0,
       "assistantMessages": 28,
       "userMessages": 0
+    },
+    {
+      "type": "reassess-roadmap",
+      "id": "M001/S01",
+      "model": "minimax/minimax-m2.5",
+      "startedAt": 1773608595523,
+      "finishedAt": 1773608649759,
+      "tokens": {
+        "input": 41432,
+        "output": 1848,
+        "cacheRead": 26112,
+        "cacheWrite": 0,
+        "total": 69392
+      },
+      "cost": 0.0152234,
+      "toolCalls": 0,
+      "assistantMessages": 2,
+      "userMessages": 0
     }
   ]
 }
