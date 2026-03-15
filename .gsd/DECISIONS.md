@@ -1,0 +1,17 @@
+# Decisions Register
+
+<!-- Append-only. Never edit or remove existing rows.
+     To reverse a decision, add a new row that supersedes it.
+     Read this file at the start of any planning or research phase. -->
+
+| # | When | Scope | Decision | Choice | Rationale | Revisable? |
+|---|------|-------|----------|--------|-----------|------------|
+| D001 | M001 | stack | MCP server implementation language | Python + FastMCP | FastMCP is the recommended Python framework for MCP; integrates well with mistapi SDK; Zscaler reference patterns are Python-based | No |
+| D002 | M001 | auth | Authentication token storage | .env file with per-org tokens | MSP-friendly: easy to manage multiple customer tokens; follows 12-factor app pattern; no database dependency | Yes — if token rotation or secret manager needed |
+| D003 | M001 | multi-tenancy | Org switching mechanism | org parameter per tool call | Cleanest UX for MSP engineers: specify customer in natural language; matches how they think about work | No |
+| D004 | M001 | safety | Safety approach | Four-layer safety model (read-only default, explicit write enable, destructive hints, platform validation) | Defense in depth for MSP operations; prevents accidental misconfiguration; follows dashboard architecture | No |
+| D005 | M001 | transport | Deployment transports | Both stdio (local) and streamable HTTP (centralized) | MSPs need both local dev/testing and centralized SaaS deployment options; FastMCP supports both | No |
+| D006 | M001 | region | Regional endpoint handling | Region per org in config | Mist has 5 regional APIs; each customer org may be in different region; must be configurable per org | No |
+| D007 | M001 | tool-design | Tool naming convention | {prefix}_{verb}_{resource} following Zscaler patterns | Consistency with reference architecture; clear semantics for both LLM and engineers | No |
+| D008 | M001 | scope | Vendor focus | Juniper Mist only (single milestone) | Depth over breadth; establish solid patterns for one vendor before expanding; MSPs can deploy Mist-only now | Yes — superseded when multi-vendor milestone starts |
+| D009 | M001 | tool-tiers | Tool implementation order | All three tiers (read, config view, write) in first milestone | MSPs need both monitoring and safe configuration capabilities; cannot ship read-only only | No |
