@@ -49,7 +49,7 @@ This milestone is complete only when all are true:
 
 ## Slices
 
-- [ ] **S01: Foundation & authentication** `risk:low` `depends:[]`
+- [x] **S01: Foundation & authentication** `risk:low` `depends:[]`
   > After this: Server starts, authenticates to Mist API with .env tokens, lists available orgs, supports both stdio and streamable HTTP transports
 - [ ] **S02: Read tools (tier1)** `risk:low` `depends:[S01]`
   > After this: Agent can query device stats, SLE metrics, client stats, alarms, events across customer orgs; tools respect rate limits

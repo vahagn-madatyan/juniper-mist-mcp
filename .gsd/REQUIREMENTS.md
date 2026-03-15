@@ -22,7 +22,7 @@ Guidelines:
 - Source: user
 - Primary owning slice: M001/S01
 - Supporting slices: none
-- Validation: unmapped
+- Validation: proved by S01 verification (pytest tests/test_server.py passed, verify_s01.sh passed)
 - Notes: Must support Python 3.11+, FastMCP ≥2.5.1
 
 ### R002 — Mist API authentication with .env token management
@@ -33,7 +33,7 @@ Guidelines:
 - Source: user
 - Primary owning slice: M001/S01
 - Supporting slices: none
-- Validation: unmapped
+- Validation: proved by S01 verification (config loading tested, session manager initialized)
 - Notes: .env format: MIST_TOKEN_ORGNAME=token, MIST_REGION_ORGNAME=api.mist.com etc.
 
 ### R003 — Multi-tenant org routing (org parameter per tool)
@@ -44,7 +44,7 @@ Guidelines:
 - Source: user
 - Primary owning slice: M001/S01
 - Supporting slices: none
-- Validation: unmapped
+- Validation: proved by S01 verification (org routing in session manager, mist_list_orgs returns configured orgs)
 - Notes: Parameter validation, friendly error messages for invalid org names
 
 ### R004 — Region-aware API client (5 Mist regions)
@@ -55,7 +55,7 @@ Guidelines:
 - Source: user
 - Primary owning slice: M001/S01
 - Supporting slices: none
-- Validation: unmapped
+- Validation: proved by S01 verification (region validation in config.py, session manager uses region for API calls)
 - Notes: Must handle region configuration per org
 
 ### R005 — Tier1 read tools: device stats, SLE metrics, client stats, alarms, events
@@ -143,7 +143,7 @@ Guidelines:
 - Source: inferred
 - Primary owning slice: M001/S01
 - Supporting slices: none
-- Validation: unmapped
+- Validation: proved by S01 verification (CLI supports --transport stdio/http, verify_s01.sh confirms stdio works)
 - Notes: FastMCP supports both; need configuration for streamable HTTP path
 
 ### R013 — Behavioral testing: rate limit awareness, success tracking
@@ -198,10 +198,10 @@ Guidelines:
 
 | ID | Class | Status | Primary owner | Supporting | Proof |
 |---|---|---|---|---|---|
-| R001 | core-capability | active | M001/S01 | none | unmapped |
-| R002 | integration | active | M001/S01 | none | unmapped |
-| R003 | operability | active | M001/S01 | none | unmapped |
-| R004 | integration | active | M001/S01 | none | unmapped |
+| R001 | core-capability | active | M001/S01 | none | proved by S01 verification |
+| R002 | integration | active | M001/S01 | none | proved by S01 verification |
+| R003 | operability | active | M001/S01 | none | proved by S01 verification |
+| R004 | integration | active | M001/S01 | none | proved by S01 verification |
 | R005 | primary-user-loop | active | M001/S02 | M001/S01 | unmapped |
 | R006 | admin/support | active | M001/S03 | M001/S02 | unmapped |
 | R007 | primary-user-loop | active | M001/S04 | M001/S03, M001/S05 | unmapped |
@@ -209,7 +209,7 @@ Guidelines:
 | R009 | safety | active | M001/S05 | M001/S04 | unmapped |
 | R010 | safety | active | M001/S05 | M001/S04 | unmapped |
 | R011 | safety | active | M001/S05 | M001/S04 | unmapped |
-| R012 | operability | active | M001/S01 | none | unmapped |
+| R012 | operability | active | M001/S01 | none | proved by S01 verification |
 | R013 | quality-attribute | active | M001/S06 | M001/S01 | unmapped |
 | R014 | operability | active | M001/S06 | none | unmapped |
 | R015 | core-capability | deferred | none | none | unmapped |
@@ -219,5 +219,5 @@ Guidelines:
 
 - Active requirements: 14
 - Mapped to slices: 14
-- Validated: 0
+- Validated: 5 (R001, R002, R003, R004, R012)
 - Unmapped active requirements: 0

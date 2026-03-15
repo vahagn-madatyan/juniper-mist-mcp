@@ -10,7 +10,7 @@ MSP engineers can use Claude Desktop (or other MCP clients) to monitor, troubles
 
 ## Current State
 
-Project initialized. Architecture planning complete via mcp-architecture-dashboard.jsx which details vendor comparisons, tool tiers, safety layers, and MSP patterns. No code yet.
+S01 (Foundation & authentication) complete. Server starts, authenticates to Mist API with .env tokens, lists available orgs, supports both stdio and streamable HTTP transports. Five requirements validated (R001, R002, R003, R004, R012).
 
 ## Architecture / Key Patterns
 
