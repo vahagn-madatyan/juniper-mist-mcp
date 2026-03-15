@@ -66,7 +66,7 @@ Guidelines:
 - Source: dashboard
 - Primary owning slice: M001/S02
 - Supporting slices: M001/S01
-- Validation: unmapped
+- Validation: proved by S02 verification (24 tests pass, verify_s02.sh exits 0, all 5 tools registered and functional)
 - Notes: Following dashboard tool list: mist_get_device_stats, mist_get_sle_summary, mist_get_client_stats, mist_get_alarms, mist_get_site_events
 
 ### R006 — Tier2 config tools: WLANs, inventory, RF templates, device config
@@ -202,7 +202,7 @@ Guidelines:
 | R002 | integration | active | M001/S01 | none | proved by S01 verification |
 | R003 | operability | active | M001/S01 | none | proved by S01 verification |
 | R004 | integration | active | M001/S01 | none | proved by S01 verification |
-| R005 | primary-user-loop | active | M001/S02 | M001/S01 | unmapped |
+| R005 | primary-user-loop | active | M001/S02 | M001/S01 | proved by S02 verification |
 | R006 | admin/support | active | M001/S03 | M001/S02 | unmapped |
 | R007 | primary-user-loop | active | M001/S04 | M001/S03, M001/S05 | unmapped |
 | R008 | safety | active | M001/S05 | M001/S04 | unmapped |
@@ -219,5 +219,5 @@ Guidelines:
 
 - Active requirements: 14
 - Mapped to slices: 14
-- Validated: 5 (R001, R002, R003, R004, R012)
+- Validated: 6 (R001, R002, R003, R004, R005, R012)
 - Unmapped active requirements: 0

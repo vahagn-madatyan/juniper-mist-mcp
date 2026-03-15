@@ -1,7 +1,7 @@
 # GSD State
 
 **Active Milestone:** M001 — Juniper Mist MCP Server
-**Active Slice:** S02 — Read tools (tier1)
+**Active Slice:** S03 — Config viewing tools (tier2)
 **Phase:** planning
 **Requirements Status:** 14 active · 0 validated · 1 deferred · 1 out of scope
 
@@ -15,4 +15,4 @@
 - None
 
 ## Next Action
-Plan slice S02 (Read tools (tier1)).
+Plan slice S03 (Config viewing tools (tier2)).

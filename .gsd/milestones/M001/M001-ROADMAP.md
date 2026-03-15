@@ -51,7 +51,7 @@ This milestone is complete only when all are true:
 
 - [x] **S01: Foundation & authentication** `risk:low` `depends:[]`
   > After this: Server starts, authenticates to Mist API with .env tokens, lists available orgs, supports both stdio and streamable HTTP transports
-- [ ] **S02: Read tools (tier1)** `risk:low` `depends:[S01]`
+- [x] **S02: Read tools (tier1)** `risk:low` `depends:[S01]`
   > After this: Agent can query device stats, SLE metrics, client stats, alarms, events across customer orgs; tools respect rate limits
 - [ ] **S03: Config viewing tools (tier2)** `risk:medium` `depends:[S02]`
   > After this: Agent can inspect WLAN configs, inventory, RF templates, device CLI config; all read tools work together

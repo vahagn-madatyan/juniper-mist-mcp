@@ -10,7 +10,7 @@ MSP engineers can use Claude Desktop (or other MCP clients) to monitor, troubles
 
 ## Current State
 
-S01 (Foundation & authentication) complete. Server starts, authenticates to Mist API with .env tokens, lists available orgs, supports both stdio and streamable HTTP transports. Five requirements validated (R001, R002, R003, R004, R012).
+S02 (Read tools/tier1) complete. Server now provides 5 tier1 read tools: mist_get_device_stats, mist_get_sle_summary, mist_get_client_stats, mist_get_alarms, mist_get_site_events. All 24 tests pass. Six requirements validated (R001, R002, R003, R004, R005, R012).
 
 ## Architecture / Key Patterns
 

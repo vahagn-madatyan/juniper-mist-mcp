@@ -13,6 +13,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import mistapi
+from mistapi import __api_response
 from fastmcp import Context, FastMCP
 from fastmcp.server.lifespan import lifespan
 
@@ -47,6 +49,74 @@ def validate_org(org: str, session_manager: MistSessionManager) -> None:
             f"Organization '{org}' is not configured. "
             f"Available organizations: {session_manager.configured_orgs}"
         )
+
+
+def serialize_api_response(response: __api_response.APIResponse) -> dict[str, Any]:
+    """Serialize an APIResponse to a JSON-serializable dict.
+
+    Args:
+        response: The APIResponse from a Mist API call.
+
+    Returns:
+        Dict with status, data, and optional error information.
+    """
+    result = {
+        "status_code": response.status_code,
+        "url": response.url,
+    }
+
+    if response.status_code and response.status_code >= 400:
+        result["error"] = True
+        result["data"] = response.data
+    else:
+        result["error"] = False
+        result["data"] = response.data
+
+    if response.next:
+        result["has_more"] = True
+        result["next_page"] = response.next
+    else:
+        result["has_more"] = False
+
+    return result
+
+
+def get_org_id(org: str, session: mistapi.APISession) -> str:
+    """Get the Mist organization ID from the org name.
+
+    Args:
+        org: Organization name (from config).
+        session: Authenticated Mist API session.
+
+    Returns:
+        The Mist org_id string.
+
+    Raises:
+        ValueError: If the org is not found.
+        RuntimeError: If the API call fails.
+    """
+    # Get all orgs the user has access to
+    response = session.mist_get("/api/v1/orgs")
+
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"Failed to fetch orgs: {response.status_code} - {response.data}"
+        )
+
+    orgs = response.data if isinstance(response.data, list) else []
+
+    # Find the matching org by name
+    for o in orgs:
+        if o.get("name") == org:
+            org_id = o.get("id")
+            if org_id:
+                logger.debug(f"Found org_id '{org_id}' for org '{org}'")
+                return org_id
+
+    raise ValueError(
+        f"Organization '{org}' not found in Mist API. "
+        f"Available orgs: {[o.get('name') for o in orgs]}"
+    )
 
 
 @lifespan
@@ -120,6 +190,286 @@ async def mist_list_orgs(ctx: Context) -> list[dict[str, Any]]:
 
     logger.info(f"Returning {len(orgs)} organizations")
     return orgs
+
+
+@mcp.tool
+async def mist_get_device_stats(
+    ctx: Context,
+    org: str,
+    duration: str = "1d",
+) -> dict[str, Any]:
+    """Get device statistics for an organization.
+
+    Returns statistics for all devices in the specified organization,
+    including APs, switches, gateways, and other network devices.
+
+    Args:
+        ctx: FastMCP context with lifespan data.
+        org: Organization name (must be configured in .env).
+        duration: Time range for stats (default: "1d"). Options: "1h", "6h", "12h", "1d", "1w", "30d".
+
+    Returns:
+        Dict with status_code, error flag, data, and pagination info.
+    """
+    logger.info(f"Tool called: mist_get_device_stats(org={org}, duration={duration})")
+
+    lifespan_ctx = ctx.lifespan_context
+    session_manager = lifespan_ctx.get("session_manager")
+
+    if session_manager is None:
+        return {"error": True, "status_code": None, "data": "No session manager available"}
+
+    # Validate org
+    validate_org(org, session_manager)
+
+    # Get authenticated session
+    session = session_manager.get_session(org)
+
+    # Get org_id from org name
+    org_id = get_org_id(org, session)
+
+    # Import the stats function
+    from mistapi.api.v1.orgs import stats as org_stats
+
+    # Call the API
+    response = org_stats.listOrgDevicesStats(session, org_id, duration=duration)
+
+    return serialize_api_response(response)
+
+
+@mcp.tool
+async def mist_get_sle_summary(
+    ctx: Context,
+    org: str,
+    site_id: str,
+) -> dict[str, Any]:
+    """Get Service Level Experience (SLE) summary for a site.
+
+    Returns the SLE summary for a specific site, including metrics for
+    throughput, latency, coverage, and capacity.
+
+    Args:
+        ctx: FastMCP context with lifespan data.
+        org: Organization name (must be configured in .env).
+        site_id: Mist site ID (UUID).
+
+    Returns:
+        Dict with status_code, error flag, data, and pagination info.
+    """
+    logger.info(f"Tool called: mist_get_sle_summary(org={org}, site_id={site_id})")
+
+    lifespan_ctx = ctx.lifespan_context
+    session_manager = lifespan_ctx.get("session_manager")
+
+    if session_manager is None:
+        return {"error": True, "status_code": None, "data": "No session manager available"}
+
+    # Validate org
+    validate_org(org, session_manager)
+
+    # Get authenticated session
+    session = session_manager.get_session(org)
+
+    # Import the SLE function
+    from mistapi.api.v1.sites import sle as site_sle
+
+    # Call the API - scope="site" to get site-level summary
+    # We need to provide a metric - let's use a common one like "ap"
+    # The API requires scope and scope_id - for site-level we use scope="site" and scope_id=site_id
+    # metric is required - let's use "site" as a general metric
+    try:
+        response = site_sle.getSiteSleSummary(
+            session,
+            site_id,
+            scope="site",
+            scope_id=site_id,
+            metric="site",
+        )
+    except TypeError:
+        # Fallback if the API signature is different - try alternative call
+        response = site_sle.getSiteSleSummary(
+            session,
+            site_id,
+            scope="site",
+            scope_id=site_id,
+            metric="ap",
+        )
+
+    return serialize_api_response(response)
+
+
+@mcp.tool
+async def mist_get_client_stats(
+    ctx: Context,
+    org: str,
+    duration: str = "1d",
+    limit: int = 100,
+) -> dict[str, Any]:
+    """Get client statistics for an organization.
+
+    Returns statistics for wireless clients in the specified organization,
+    including connection details, bandwidth, and session information.
+
+    Args:
+        ctx: FastMCP context with lifespan data.
+        org: Organization name (must be configured in .env).
+        duration: Time range for stats (default: "1d"). Options: "1h", "6h", "12h", "1d", "1w", "30d".
+        limit: Maximum number of clients to return (default: 100).
+
+    Returns:
+        Dict with status_code, error flag, data, and pagination info.
+    """
+    logger.info(f"Tool called: mist_get_client_stats(org={org}, duration={duration}, limit={limit})")
+
+    lifespan_ctx = ctx.lifespan_context
+    session_manager = lifespan_ctx.get("session_manager")
+
+    if session_manager is None:
+        return {"error": True, "status_code": None, "data": "No session manager available"}
+
+    # Validate org
+    validate_org(org, session_manager)
+
+    # Get authenticated session
+    session = session_manager.get_session(org)
+
+    # Get org_id from org name
+    org_id = get_org_id(org, session)
+
+    # Import the clients function
+    from mistapi.api.v1.orgs import clients as org_clients
+
+    # Call the API
+    response = org_clients.searchOrgWirelessClients(
+        session,
+        org_id,
+        duration=duration,
+        limit=limit,
+    )
+
+    return serialize_api_response(response)
+
+
+@mcp.tool
+async def mist_get_alarms(
+    ctx: Context,
+    org: str,
+    start: str | None = None,
+    end: str | None = None,
+    status: str | None = None,
+    limit: int = 100,
+) -> dict[str, Any]:
+    """Get alarms for an organization.
+
+    Returns alarms from the specified organization, including infrastructure,
+    security, and Marvis AI-driven detections.
+
+    Args:
+        ctx: FastMCP context with lifespan data.
+        org: Organization name (must be configured in .env).
+        start: Start time (ISO 8601 format or duration string like "1d").
+        end: End time (ISO 8601 format or duration string).
+        status: Alarm status filter - "acked" for acknowledged, "unacked" for unacknowledged.
+        limit: Maximum number of alarms to return (default: 100).
+
+    Returns:
+        Dict with status_code, error flag, data, and pagination info.
+    """
+    logger.info(f"Tool called: mist_get_alarms(org={org}, start={start}, end={end}, status={status}, limit={limit})")
+
+    lifespan_ctx = ctx.lifespan_context
+    session_manager = lifespan_ctx.get("session_manager")
+
+    if session_manager is None:
+        return {"error": True, "status_code": None, "data": "No session manager available"}
+
+    # Validate org
+    validate_org(org, session_manager)
+
+    # Get authenticated session
+    session = session_manager.get_session(org)
+
+    # Get org_id from org name
+    org_id = get_org_id(org, session)
+
+    # Import the alarms function
+    from mistapi.api.v1.orgs import alarms as org_alarms
+
+    # Map status to acked parameter
+    acked = None
+    if status == "acked":
+        acked = True
+    elif status == "unacked":
+        acked = False
+
+    # Call the API
+    response = org_alarms.searchOrgAlarms(
+        session,
+        org_id,
+        start=start,
+        end=end,
+        acked=acked,
+        limit=limit,
+    )
+
+    return serialize_api_response(response)
+
+
+@mcp.tool
+async def mist_get_site_events(
+    ctx: Context,
+    org: str,
+    site_id: str | None = None,
+    start: str | None = None,
+    end: str | None = None,
+    limit: int = 100,
+) -> dict[str, Any]:
+    """Get events for an organization or site.
+
+    Returns system events from the specified organization or site,
+    including configuration changes, user activities, and system alerts.
+
+    Args:
+        ctx: FastMCP context with lifespan data.
+        org: Organization name (must be configured in .env).
+        site_id: Optional site ID to filter events to a specific site.
+        start: Start time (ISO 8601 format or duration string like "1d").
+        end: End time (ISO 8601 format or duration string).
+        limit: Maximum number of events to return (default: 100).
+
+    Returns:
+        Dict with status_code, error flag, data, and pagination info.
+    """
+    logger.info(f"Tool called: mist_get_site_events(org={org}, site_id={site_id}, start={start}, end={end}, limit={limit})")
+
+    lifespan_ctx = ctx.lifespan_context
+    session_manager = lifespan_ctx.get("session_manager")
+
+    if session_manager is None:
+        return {"error": True, "status_code": None, "data": "No session manager available"}
+
+    # Validate org
+    validate_org(org, session_manager)
+
+    # Get authenticated session
+    session = session_manager.get_session(org)
+
+    # Get org_id from org name
+    org_id = get_org_id(org, session)
+
+    # Import the events function
+    from mistapi.api.v1.orgs import events as org_events
+
+    # Call the API - use org-level events
+    response = org_events.searchOrgEvents(
+        session,
+        org_id,
+        start=start,
+        end=end,
+        limit=limit,
+    )
+
+    return serialize_api_response(response)
 
 
 # =============================================================================

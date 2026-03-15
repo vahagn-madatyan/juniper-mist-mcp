@@ -198,5 +198,352 @@ def test_org_validation_error():
     assert "acme_corp" in str(exc_info.value)
 
 
+def test_tier1_tools_registered():
+    """Test that all tier1 read tools are registered.
+
+    Verifies that the tier1 read tools are registered in the MCP server.
+    This test verifies all 5 tier1 read tools:
+    - mist_list_orgs (always available)
+    - mist_get_device_stats (T01)
+    - mist_get_sle_summary (T01)
+    - mist_get_client_stats (T02)
+    - mist_get_alarms (T02)
+    - mist_get_site_events (T02)
+    """
+    import asyncio
+    from mist_mcp.server import mcp
+
+    async def check_tools():
+        tools = await mcp.list_tools()
+        return [t.name for t in tools]
+
+    tool_names = asyncio.run(check_tools())
+
+    # All tier1 tools
+    tier1_tools = [
+        "mist_list_orgs",
+        "mist_get_device_stats",
+        "mist_get_sle_summary",
+        "mist_get_client_stats",
+        "mist_get_alarms",
+        "mist_get_site_events",
+    ]
+
+    for tool_name in tier1_tools:
+        assert tool_name in tool_names, f"{tool_name} not found in tools: {tool_names}"
+
+
+def test_client_stats_signature():
+    """Test that mist_get_client_stats tool exists and is callable."""
+    import asyncio
+    from mist_mcp.server import mcp
+
+    async def check_tools():
+        tools = await mcp.list_tools()
+        return [t.name for t in tools]
+
+    tool_names = asyncio.run(check_tools())
+    assert "mist_get_client_stats" in tool_names
+
+
+def test_alarms_signature():
+    """Test that mist_get_alarms tool exists and is callable."""
+    import asyncio
+    from mist_mcp.server import mcp
+
+    async def check_tools():
+        tools = await mcp.list_tools()
+        return [t.name for t in tools]
+
+    tool_names = asyncio.run(check_tools())
+    assert "mist_get_alarms" in tool_names
+
+
+def test_site_events_signature():
+    """Test that mist_get_site_events tool exists and is callable."""
+    import asyncio
+    from mist_mcp.server import mcp
+
+    async def check_tools():
+        tools = await mcp.list_tools()
+        return [t.name for t in tools]
+
+    tool_names = asyncio.run(check_tools())
+    assert "mist_get_site_events" in tool_names
+
+
+def test_serialize_api_response():
+    """Test the serialize_api_response helper function."""
+    from mist_mcp.server import serialize_api_response
+    from mistapi import __api_response
+    from unittest.mock import MagicMock
+
+    # Create a mock response
+    mock_response = MagicMock(spec=__api_response.APIResponse)
+    mock_response.status_code = 200
+    mock_response.url = "https://api.mist.com/api/v1/test"
+    mock_response.data = {"key": "value"}
+    mock_response.next = None
+
+    result = serialize_api_response(mock_response)
+
+    assert result["status_code"] == 200
+    assert result["error"] is False
+    assert result["data"] == {"key": "value"}
+    assert result["has_more"] is False
+
+
+def test_serialize_api_response_error():
+    """Test serialize_api_response with error response."""
+    from mist_mcp.server import serialize_api_response
+    from mistapi import __api_response
+    from unittest.mock import MagicMock
+
+    # Create a mock error response
+    mock_response = MagicMock(spec=__api_response.APIResponse)
+    mock_response.status_code = 400
+    mock_response.url = "https://api.mist.com/api/v1/test"
+    mock_response.data = {"error": "Bad request"}
+    mock_response.next = None
+
+    result = serialize_api_response(mock_response)
+
+    assert result["status_code"] == 400
+    assert result["error"] is True
+    assert result["data"] == {"error": "Bad request"}
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+# =============================================================================
+# Tests for tier1 tool parameter validation and mock-based testing
+# =============================================================================
+
+
+def test_device_stats_invalid_org():
+    """Test that mist_get_device_stats validates org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    # Test invalid org raises ValueError
+    from mist_mcp.server import validate_org
+    with pytest.raises(ValueError) as exc_info:
+        validate_org("nonexistent_org", session_manager)
+
+    assert "not configured" in str(exc_info.value).lower()
+
+
+def test_sle_summary_invalid_org():
+    """Test that mist_get_sle_summary validates org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    with pytest.raises(ValueError) as exc_info:
+        validate_org("invalid_org_12345", session_manager)
+
+    assert "not configured" in str(exc_info.value).lower()
+
+
+def test_client_stats_invalid_org():
+    """Test that mist_get_client_stats validates org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    with pytest.raises(ValueError) as exc_info:
+        validate_org("bad_org_name", session_manager)
+
+    assert "not configured" in str(exc_info.value).lower()
+
+
+def test_alarms_invalid_org():
+    """Test that mist_get_alarms validates org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    with pytest.raises(ValueError) as exc_info:
+        validate_org("fake_org", session_manager)
+
+    assert "not configured" in str(exc_info.value).lower()
+
+
+def test_site_events_invalid_org():
+    """Test that mist_get_site_events validates org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    with pytest.raises(ValueError) as exc_info:
+        validate_org("nonexistent", session_manager)
+
+    assert "not configured" in str(exc_info.value).lower()
+
+
+def test_device_stats_valid_org():
+    """Test that mist_get_device_stats accepts valid org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    # Should not raise for configured orgs
+    validate_org("example_org", session_manager)
+    validate_org("acme_corp", session_manager)
+
+
+def test_sle_summary_valid_org():
+    """Test that mist_get_sle_summary accepts valid org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    validate_org("example_org", session_manager)
+    validate_org("acme_corp", session_manager)
+
+
+def test_client_stats_valid_org():
+    """Test that mist_get_client_stats accepts valid org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    validate_org("example_org", session_manager)
+    validate_org("acme_corp", session_manager)
+
+
+def test_alarms_valid_org():
+    """Test that mist_get_alarms accepts valid org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    validate_org("example_org", session_manager)
+    validate_org("acme_corp", session_manager)
+
+
+def test_site_events_valid_org():
+    """Test that mist_get_site_events accepts valid org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    validate_org("example_org", session_manager)
+    validate_org("acme_corp", session_manager)
+
+
+def test_mist_list_orgs_returns_data():
+    """Test that mist_list_orgs returns organization data."""
+    from mist_mcp.config import Config
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+
+    orgs = []
+    for org_name in config.orgs:
+        org_config = config.get_org(org_name)
+        if org_config:
+            orgs.append({
+                "name": org_config.name,
+                "region": org_config.region,
+                "has_token": bool(org_config.token),
+            })
+
+    # Verify we get the expected orgs
+    assert len(orgs) == 2
+    org_names = [o["name"] for o in orgs]
+    assert "example_org" in org_names
+    assert "acme_corp" in org_names
+
+    # Verify regions
+    example_org = next(o for o in orgs if o["name"] == "example_org")
+    assert example_org["region"] == "api.mist.com"
+    assert example_org["has_token"] is True
+
+    acme_org = next(o for o in orgs if o["name"] == "acme_corp")
+    assert acme_org["region"] == "api.eu.mist.com"
+    assert acme_org["has_token"] is True
+
+
+def test_get_org_id_raises_on_invalid_org():
+    """Test that get_org_id raises ValueError for nonexistent org."""
+    from unittest.mock import MagicMock
+    from mist_mcp.server import get_org_id
+    from mistapi import __api_response
+
+    # Create a mock session
+    mock_session = MagicMock()
+
+    # Mock the API response with empty orgs list
+    mock_response = MagicMock(spec=__api_response.APIResponse)
+    mock_response.status_code = 200
+    mock_response.data = []
+    mock_session.mist_get.return_value = mock_response
+
+    with pytest.raises(ValueError) as exc_info:
+        get_org_id("nonexistent_org", mock_session)
+
+    assert "not found" in str(exc_info.value).lower()
+
+
+def test_serialize_api_response_with_pagination():
+    """Test serialize_api_response includes pagination info."""
+    from mist_mcp.server import serialize_api_response
+    from mistapi import __api_response
+    from unittest.mock import MagicMock
+
+    # Create mock response with pagination
+    mock_response = MagicMock(spec=__api_response.APIResponse)
+    mock_response.status_code = 200
+    mock_response.url = "https://api.mist.com/api/v1/test"
+    mock_response.data = [{"id": 1}, {"id": 2}]
+    mock_response.next = "https://api.mist.com/api/v1/test?page=2"
+
+    result = serialize_api_response(mock_response)
+
+    assert result["status_code"] == 200
+    assert result["error"] is False
+    assert result["has_more"] is True
+    assert result["next_page"] == "https://api.mist.com/api/v1/test?page=2"
