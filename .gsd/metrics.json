@@ -253,6 +253,24 @@
       "toolCalls": 0,
       "assistantMessages": 19,
       "userMessages": 0
+    },
+    {
+      "type": "run-uat",
+      "id": "M001/S03",
+      "model": "minimax/minimax-m2.5",
+      "startedAt": 1773685784135,
+      "finishedAt": 1773686314857,
+      "tokens": {
+        "input": 188480,
+        "output": 3392,
+        "cacheRead": 311956,
+        "cacheWrite": 0,
+        "total": 503828
+      },
+      "cost": 0.06903068,
+      "toolCalls": 0,
+      "assistantMessages": 16,
+      "userMessages": 0
     }
   ]
 }
