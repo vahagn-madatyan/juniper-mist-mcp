@@ -145,6 +145,114 @@
       "toolCalls": 0,
       "assistantMessages": 2,
       "userMessages": 0
+    },
+    {
+      "type": "research-slice",
+      "id": "M001/S03",
+      "model": "minimax/minimax-m2.5",
+      "startedAt": 1773612467258,
+      "finishedAt": 1773612670217,
+      "tokens": {
+        "input": 64021,
+        "output": 4674,
+        "cacheRead": 700459,
+        "cacheWrite": 0,
+        "total": 769154
+      },
+      "cost": 0.04550876500000001,
+      "toolCalls": 0,
+      "assistantMessages": 19,
+      "userMessages": 0
+    },
+    {
+      "type": "plan-slice",
+      "id": "M001/S03",
+      "model": "minimax/minimax-m2.5",
+      "startedAt": 1773612670218,
+      "finishedAt": 1773612898060,
+      "tokens": {
+        "input": 72420,
+        "output": 7721,
+        "cacheRead": 662772,
+        "cacheWrite": 0,
+        "total": 742913
+      },
+      "cost": 0.050512259999999996,
+      "toolCalls": 0,
+      "assistantMessages": 18,
+      "userMessages": 0
+    },
+    {
+      "type": "execute-task",
+      "id": "M001/S03/T01",
+      "model": "minimax/minimax-m2.5",
+      "startedAt": 1773612898062,
+      "finishedAt": 1773613187065,
+      "tokens": {
+        "input": 75736,
+        "output": 7786,
+        "cacheRead": 873856,
+        "cacheWrite": 0,
+        "total": 957378
+      },
+      "cost": 0.057901,
+      "toolCalls": 0,
+      "assistantMessages": 23,
+      "userMessages": 0
+    },
+    {
+      "type": "execute-task",
+      "id": "M001/S03/T02",
+      "model": "minimax/minimax-m2.5",
+      "startedAt": 1773613187067,
+      "finishedAt": 1773613469586,
+      "tokens": {
+        "input": 157271,
+        "output": 7069,
+        "cacheRead": 719156,
+        "cacheWrite": 0,
+        "total": 883496
+      },
+      "cost": 0.07645242499999998,
+      "toolCalls": 0,
+      "assistantMessages": 22,
+      "userMessages": 0
+    },
+    {
+      "type": "execute-task",
+      "id": "M001/S03/T03",
+      "model": "minimax/minimax-m2.5",
+      "startedAt": 1773613469588,
+      "finishedAt": 1773613736868,
+      "tokens": {
+        "input": 64048,
+        "output": 4748,
+        "cacheRead": 678583,
+        "cacheWrite": 0,
+        "total": 747379
+      },
+      "cost": 0.04494925,
+      "toolCalls": 0,
+      "assistantMessages": 20,
+      "userMessages": 0
+    },
+    {
+      "type": "execute-task",
+      "id": "M001/S03/T04",
+      "model": "minimax/minimax-m2.5",
+      "startedAt": 1773613736870,
+      "finishedAt": 1773614065782,
+      "tokens": {
+        "input": 68080,
+        "output": 7286,
+        "cacheRead": 705524,
+        "cacheWrite": 0,
+        "total": 780890
+      },
+      "cost": 0.04999252,
+      "toolCalls": 0,
+      "assistantMessages": 19,
+      "userMessages": 0
     }
   ]
 }

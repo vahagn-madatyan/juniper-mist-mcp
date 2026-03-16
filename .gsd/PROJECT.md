@@ -10,7 +10,7 @@ MSP engineers can use Claude Desktop (or other MCP clients) to monitor, troubles
 
 ## Current State
 
-S02 (Read tools/tier1) complete. Server now provides 5 tier1 read tools: mist_get_device_stats, mist_get_sle_summary, mist_get_client_stats, mist_get_alarms, mist_get_site_events. All 24 tests pass. Six requirements validated (R001, R002, R003, R004, R005, R012).
+S03 (Config viewing tools/tier2) complete. Server now provides 9 read tools total: 5 tier1 (device stats, SLE metrics, client stats, alarms, events) + 4 tier2 (WLANs, inventory, RF templates, device config). All 37 tests pass. Seven requirements validated (R001, R002, R003, R004, R005, R006, R012).
 
 ## Architecture / Key Patterns
 

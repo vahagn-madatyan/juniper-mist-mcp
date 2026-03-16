@@ -472,6 +472,240 @@ async def mist_get_site_events(
     return serialize_api_response(response)
 
 
+@mcp.tool
+async def mist_list_wlans(
+    ctx: Context,
+    org: str,
+    limit: int = 100,
+    page: int = 1,
+) -> dict[str, Any]:
+    """List WLAN profiles in an organization.
+
+    Returns all WLAN profiles (SSIDs) configured in the specified organization,
+    including security settings, broadcasting configuration, and access policies.
+
+    Args:
+        ctx: FastMCP context with lifespan data.
+        org: Organization name (must be configured in .env).
+        limit: Maximum number of WLANs to return (default: 100).
+        page: Page number for pagination (default: 1).
+
+    Returns:
+        Dict with status_code, error flag, data, and pagination info.
+    """
+    logger.info(f"Tool called: mist_list_wlans(org={org}, limit={limit}, page={page})")
+
+    lifespan_ctx = ctx.lifespan_context
+    session_manager = lifespan_ctx.get("session_manager")
+
+    if session_manager is None:
+        return {"error": True, "status_code": None, "data": "No session manager available"}
+
+    # Validate org
+    validate_org(org, session_manager)
+
+    # Get authenticated session
+    session = session_manager.get_session(org)
+
+    # Get org_id from org name
+    org_id = get_org_id(org, session)
+
+    # Import the wlans function
+    from mistapi.api.v1.orgs import wlans as org_wlans
+
+    # Call the API
+    response = org_wlans.listOrgWlans(
+        session,
+        org_id,
+        limit=limit,
+        page=page,
+    )
+
+    return serialize_api_response(response)
+
+
+@mcp.tool
+async def mist_get_rf_templates(
+    ctx: Context,
+    org: str,
+    limit: int = 100,
+    page: int = 1,
+) -> dict[str, Any]:
+    """List RF templates in an organization.
+
+    Returns all RF (Radio Frequency) templates configured in the specified
+    organization, including channel, transmit power, and band settings.
+
+    Args:
+        ctx: FastMCP context with lifespan data.
+        org: Organization name (must be configured in .env).
+        limit: Maximum number of RF templates to return (default: 100).
+        page: Page number for pagination (default: 1).
+
+    Returns:
+        Dict with status_code, error flag, data, and pagination info.
+    """
+    logger.info(f"Tool called: mist_get_rf_templates(org={org}, limit={limit}, page={page})")
+
+    lifespan_ctx = ctx.lifespan_context
+    session_manager = lifespan_ctx.get("session_manager")
+
+    if session_manager is None:
+        return {"error": True, "status_code": None, "data": "No session manager available"}
+
+    # Validate org
+    validate_org(org, session_manager)
+
+    # Get authenticated session
+    session = session_manager.get_session(org)
+
+    # Get org_id from org name
+    org_id = get_org_id(org, session)
+
+    # Import the rftemplates function
+    from mistapi.api.v1.orgs import rftemplates as org_rftemplates
+
+    # Call the API
+    response = org_rftemplates.listOrgRfTemplates(
+        session,
+        org_id,
+        limit=limit,
+        page=page,
+    )
+
+    return serialize_api_response(response)
+
+
+@mcp.tool
+async def mist_get_inventory(
+    ctx: Context,
+    org: str,
+    type: str | None = None,
+    status: str | None = None,
+    site_id: str | None = None,
+    name: str | None = None,
+    limit: int = 100,
+    offset: int = 0,
+) -> dict[str, Any]:
+    """Search device inventory in an organization.
+
+    Returns devices from the organization inventory that match the specified
+    filters. Supports filtering by device type, status, site, and name.
+
+    Args:
+        ctx: FastMCP context with lifespan data.
+        org: Organization name (must be configured in .env).
+        type: Device type filter - "ap" (access point), "gateway", or "switch".
+        status: Device status filter - "online", "offline", or "provisioned".
+        site_id: Filter by specific site ID (UUID).
+        name: Partial name match filter.
+        limit: Maximum number of devices to return (default: 100).
+        offset: Pagination offset (default: 0).
+
+    Returns:
+        Dict with status_code, error flag, data, and pagination info.
+    """
+    logger.info(f"Tool called: mist_get_inventory(org={org}, type={type}, status={status}, site_id={site_id}, name={name}, limit={limit}, offset={offset})")
+
+    lifespan_ctx = ctx.lifespan_context
+    session_manager = lifespan_ctx.get("session_manager")
+
+    if session_manager is None:
+        return {"error": True, "status_code": None, "data": "No session manager available"}
+
+    # Validate org
+    validate_org(org, session_manager)
+
+    # Get authenticated session
+    session = session_manager.get_session(org)
+
+    # Get org_id from org name
+    org_id = get_org_id(org, session)
+
+    # Import the inventory function
+    from mistapi.api.v1.orgs import inventory as org_inventory
+
+    # Build filter dict with only provided (non-None) parameters
+    filters: dict[str, Any] = {"limit": limit, "offset": offset}
+    if type is not None:
+        filters["type"] = type
+    if status is not None:
+        filters["status"] = status
+    if site_id is not None:
+        filters["site_id"] = site_id
+    if name is not None:
+        filters["name"] = name
+
+    # Call the API
+    response = org_inventory.searchOrgInventory(session, org_id, **filters)
+
+    return serialize_api_response(response)
+
+
+@mcp.tool
+async def mist_get_device_config_cmd(
+    ctx: Context,
+    org: str,
+    site_id: str,
+    device_id: str,
+    sort: str | None = None,
+) -> dict[str, Any]:
+    """Get generated CLI configuration commands for a device.
+
+    Returns the generated CLI configuration for a specific device in a Mist site.
+    The configuration includes the complete device-specific commands needed to
+    configure the device based on its settings and policies.
+
+    Note: site_id and device_id are Mist IDs (UUIDs), not names. You can obtain
+    site_id from mist_get_site_events or by listing sites, and device_id from
+    mist_get_inventory.
+
+    Args:
+        ctx: FastMCP context with lifespan data.
+        org: Organization name (must be configured in .env).
+        site_id: Mist site ID (UUID) - must be a valid Mist site ID.
+        device_id: Mist device ID (UUID) - must be a valid device ID.
+        sort: Sort order for the configuration output. Options: "name", "type", "mac".
+
+    Returns:
+        Dict with status_code, error flag, data, and pagination info.
+    """
+    logger.info(f"Tool called: mist_get_device_config_cmd(org={org}, site_id={site_id}, device_id={device_id}, sort={sort})")
+
+    lifespan_ctx = ctx.lifespan_context
+    session_manager = lifespan_ctx.get("session_manager")
+
+    if session_manager is None:
+        return {"error": True, "status_code": None, "data": "No session manager available"}
+
+    # Validate org
+    validate_org(org, session_manager)
+
+    # Get authenticated session
+    session = session_manager.get_session(org)
+
+    # Get org_id from org name (needed to validate site belongs to org)
+    org_id = get_org_id(org, session)
+
+    # Import the devices function
+    from mistapi.api.v1.sites import devices as site_devices
+
+    # Build kwargs with only provided (non-None) parameters
+    kwargs: dict[str, Any] = {}
+    if sort is not None:
+        kwargs["sort"] = sort
+
+    # Call the API
+    response = site_devices.getSiteDeviceConfigCmd(
+        session,
+        site_id,
+        device_id,
+        **kwargs,
+    )
+
+    return serialize_api_response(response)
+
+
 # =============================================================================
 # CLI and Server Entry Point
 # =============================================================================

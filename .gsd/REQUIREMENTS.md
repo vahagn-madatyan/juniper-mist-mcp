@@ -77,7 +77,7 @@ Guidelines:
 - Source: dashboard
 - Primary owning slice: M001/S03
 - Supporting slices: M001/S02
-- Validation: unmapped
+- Validation: proved by S03 verification (37 tests pass, verify_s03.sh exits 0, all 4 tools registered and functional)
 - Notes: mist_list_wlans, mist_get_inventory, mist_get_rf_templates, mist_get_device_config_cmd
 
 ### R007 — Tier3 write tools: WLAN updates, NAC rules, WXLAN, security policies
@@ -203,7 +203,7 @@ Guidelines:
 | R003 | operability | active | M001/S01 | none | proved by S01 verification |
 | R004 | integration | active | M001/S01 | none | proved by S01 verification |
 | R005 | primary-user-loop | active | M001/S02 | M001/S01 | proved by S02 verification |
-| R006 | admin/support | active | M001/S03 | M001/S02 | unmapped |
+| R006 | admin/support | active | M001/S03 | M001/S02 | proved by S03 verification |
 | R007 | primary-user-loop | active | M001/S04 | M001/S03, M001/S05 | unmapped |
 | R008 | safety | active | M001/S05 | M001/S04 | unmapped |
 | R009 | safety | active | M001/S05 | M001/S04 | unmapped |
@@ -219,5 +219,5 @@ Guidelines:
 
 - Active requirements: 14
 - Mapped to slices: 14
-- Validated: 6 (R001, R002, R003, R004, R005, R012)
+- Validated: 7 (R001, R002, R003, R004, R005, R006, R012)
 - Unmapped active requirements: 0

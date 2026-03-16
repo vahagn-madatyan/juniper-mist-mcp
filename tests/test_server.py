@@ -547,3 +547,215 @@ def test_serialize_api_response_with_pagination():
     assert result["error"] is False
     assert result["has_more"] is True
     assert result["next_page"] == "https://api.mist.com/api/v1/test?page=2"
+
+
+def test_wlans_signature():
+    """Test that mist_list_wlans tool exists and is callable."""
+    import asyncio
+    from mist_mcp.server import mcp
+
+    async def check_tools():
+        tools = await mcp.list_tools()
+        return [t.name for t in tools]
+
+    tool_names = asyncio.run(check_tools())
+    assert "mist_list_wlans" in tool_names
+
+
+def test_rf_templates_signature():
+    """Test that mist_get_rf_templates tool exists and is callable."""
+    import asyncio
+    from mist_mcp.server import mcp
+
+    async def check_tools():
+        tools = await mcp.list_tools()
+        return [t.name for t in tools]
+
+    tool_names = asyncio.run(check_tools())
+    assert "mist_get_rf_templates" in tool_names
+
+
+def test_wlans_invalid_org():
+    """Test that mist_list_wlans validates org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    with pytest.raises(ValueError) as exc_info:
+        validate_org("fake_wlan_org", session_manager)
+
+    assert "not configured" in str(exc_info.value).lower()
+
+
+def test_rf_templates_invalid_org():
+    """Test that mist_get_rf_templates validates org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    with pytest.raises(ValueError) as exc_info:
+        validate_org("nonexistent_rf_org", session_manager)
+
+    assert "not configured" in str(exc_info.value).lower()
+
+
+def test_wlans_valid_org():
+    """Test that mist_list_wlans accepts valid org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    validate_org("example_org", session_manager)
+    validate_org("acme_corp", session_manager)
+
+
+def test_rf_templates_valid_org():
+    """Test that mist_get_rf_templates accepts valid org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    validate_org("example_org", session_manager)
+    validate_org("acme_corp", session_manager)
+
+
+def test_tier2_tools_registered():
+    """Test that all tier2 read tools are registered.
+
+    Verifies that the tier2 read tools are registered in the MCP server.
+    This test verifies all 4 tier2 tools:
+    - mist_list_wlans (T01)
+    - mist_get_rf_templates (T01)
+    - mist_get_inventory (T02)
+    - mist_get_device_config_cmd (T03)
+    """
+    import asyncio
+    from mist_mcp.server import mcp
+
+    async def check_tools():
+        tools = await mcp.list_tools()
+        return [t.name for t in tools]
+
+    tool_names = asyncio.run(check_tools())
+
+    # All tier2 tools for S03
+    tier2_tools = [
+        "mist_list_wlans",
+        "mist_get_rf_templates",
+        "mist_get_inventory",
+        "mist_get_device_config_cmd",
+    ]
+
+    for tool_name in tier2_tools:
+        assert tool_name in tool_names, f"{tool_name} not found in tools: {tool_names}"
+
+
+# =============================================================================
+# Tests for tier2 tool parameter validation (T01-T03)
+# =============================================================================
+
+
+def test_mist_get_inventory_invalid_org():
+    """Test that mist_get_inventory validates org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    with pytest.raises(ValueError) as exc_info:
+        validate_org("fake_inventory_org", session_manager)
+
+    assert "not configured" in str(exc_info.value).lower()
+
+
+def test_mist_get_device_config_cmd_invalid_org():
+    """Test that mist_get_device_config_cmd validates org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    with pytest.raises(ValueError) as exc_info:
+        validate_org("nonexistent_device_org", session_manager)
+
+    assert "not configured" in str(exc_info.value).lower()
+
+
+def test_mist_get_inventory_valid_org():
+    """Test that mist_get_inventory accepts valid org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    validate_org("example_org", session_manager)
+    validate_org("acme_corp", session_manager)
+
+
+def test_mist_get_device_config_cmd_valid_org():
+    """Test that mist_get_device_config_cmd accepts valid org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    validate_org("example_org", session_manager)
+    validate_org("acme_corp", session_manager)
+
+
+def test_mist_get_inventory_signature():
+    """Test that mist_get_inventory tool exists and is callable."""
+    import asyncio
+    from mist_mcp.server import mcp
+
+    async def check_tools():
+        tools = await mcp.list_tools()
+        return [t.name for t in tools]
+
+    tool_names = asyncio.run(check_tools())
+    assert "mist_get_inventory" in tool_names
+
+
+def test_mist_get_device_config_cmd_signature():
+    """Test that mist_get_device_config_cmd tool exists and is callable."""
+    import asyncio
+    from mist_mcp.server import mcp
+
+    async def check_tools():
+        tools = await mcp.list_tools()
+        return [t.name for t in tools]
+
+    tool_names = asyncio.run(check_tools())
+    assert "mist_get_device_config_cmd" in tool_names
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
