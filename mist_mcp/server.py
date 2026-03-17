@@ -17,6 +17,8 @@ import mistapi
 from mistapi import __api_response
 from fastmcp import Context, FastMCP
 from fastmcp.server.lifespan import lifespan
+from fastmcp.tools import Tool
+from mcp.types import ToolAnnotations
 
 from mist_mcp.config import Config
 from mist_mcp.session import MistSessionManager
@@ -1125,17 +1127,23 @@ def register_tools(enable_write: bool = False) -> None:
         mist_manage_security_policies,
     ]
     
-    # Register read tools (always registered)
-    for tool_func in read_tools:
-        mcp.add_tool(tool_func)
-        logger.info(f"Registered read tool: {tool_func.__name__}")
+    # Create annotations for read and write tools (MCP spec)
+    read_annotations = ToolAnnotations(readOnlyHint=True)
+    write_annotations = ToolAnnotations(destructiveHint=True)
     
-    # Register write tools based on enable_write flag
+    # Register read tools with readOnlyHint annotation
+    for tool_func in read_tools:
+        tool = Tool.from_function(tool_func, annotations=read_annotations)
+        mcp.add_tool(tool)
+        logger.info(f"Registered read tool: {tool_func.__name__} [readOnlyHint=True]")
+    
+    # Register write tools with destructiveHint annotation
     # For now, register all write tools regardless of flag (T01 step 2)
     # In future iterations, this can be made conditional
     for tool_func in write_tools:
-        mcp.add_tool(tool_func)
-        logger.info(f"Registered write tool: {tool_func.__name__}")
+        tool = Tool.from_function(tool_func, annotations=write_annotations)
+        mcp.add_tool(tool)
+        logger.info(f"Registered write tool: {tool_func.__name__} [destructiveHint=True]")
     
     _tools_registered = True
     logger.info(f"Tool registration complete: {len(read_tools)} read tools, {len(write_tools)} write tools")

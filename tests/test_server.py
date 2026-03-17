@@ -1305,5 +1305,109 @@ def test_mist_manage_security_policies_delete_requires_policy_id():
     assert "policy_id" in str(exc_info.value).lower()
 
 
+# =============================================================================
+# Tests for MCP tool annotations (T02)
+# =============================================================================
+
+
+def test_read_tools_have_readonly_hint():
+    """Test that all read tools have readOnlyHint=True annotation.
+
+    Verifies that all 10 read tools (tier1 + tier2) have the
+    readOnlyHint annotation set to True, signaling to LLM clients
+    that these are safe read-only operations.
+    """
+    import asyncio
+    from mist_mcp.server import mcp
+
+    # Register tools before checking
+    register_tools(enable_write=True)
+
+    async def check_tool_annotations():
+        tools = await mcp.list_tools()
+        return {t.name: t.annotations for t in tools}
+
+    tool_annotations = asyncio.run(check_tool_annotations())
+
+    # Define expected read tools (10 tools)
+    read_tools = [
+        "mist_list_orgs",
+        "mist_get_device_stats",
+        "mist_get_sle_summary",
+        "mist_get_client_stats",
+        "mist_get_alarms",
+        "mist_get_site_events",
+        "mist_list_wlans",
+        "mist_get_rf_templates",
+        "mist_get_inventory",
+        "mist_get_device_config_cmd",
+    ]
+
+    # Verify each read tool has readOnlyHint=True
+    for tool_name in read_tools:
+        assert tool_name in tool_annotations, f"{tool_name} not found in registered tools"
+        annotations = tool_annotations[tool_name]
+        assert annotations is not None, f"{tool_name} has no annotations"
+        assert annotations.readOnlyHint is True, f"{tool_name} missing readOnlyHint=True"
+
+
+def test_write_tools_have_destructive_hint():
+    """Test that all write tools have destructiveHint=True annotation.
+
+    Verifies that all 4 write tools (tier3) have the
+    destructiveHint annotation set to True, signaling to LLM clients
+    that these are destructive operations requiring confirmation.
+    """
+    import asyncio
+    from mist_mcp.server import mcp
+
+    # Register tools before checking
+    register_tools(enable_write=True)
+
+    async def check_tool_annotations():
+        tools = await mcp.list_tools()
+        return {t.name: t.annotations for t in tools}
+
+    tool_annotations = asyncio.run(check_tool_annotations())
+
+    # Define expected write tools (4 tools)
+    write_tools = [
+        "mist_update_wlan",
+        "mist_manage_nac_rules",
+        "mist_manage_wxlan",
+        "mist_manage_security_policies",
+    ]
+
+    # Verify each write tool has destructiveHint=True
+    for tool_name in write_tools:
+        assert tool_name in tool_annotations, f"{tool_name} not found in registered tools"
+        annotations = tool_annotations[tool_name]
+        assert annotations is not None, f"{tool_name} has no annotations"
+        assert annotations.destructiveHint is True, f"{tool_name} missing destructiveHint=True"
+
+
+def test_all_tools_have_annotations():
+    """Test that all registered tools have annotations defined.
+
+    Verifies that no tools are missing annotations, ensuring
+    proper MCP tool specification compliance.
+    """
+    import asyncio
+    from mist_mcp.server import mcp
+
+    # Register tools before checking
+    register_tools(enable_write=True)
+
+    async def check_tool_annotations():
+        tools = await mcp.list_tools()
+        return {t.name: t.annotations for t in tools}
+
+    tool_annotations = asyncio.run(check_tool_annotations())
+
+    # Verify all tools have annotations
+    for tool_name, annotations in tool_annotations.items():
+        assert annotations is not None, f"{tool_name} has no annotations"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

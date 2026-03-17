@@ -35,6 +35,7 @@
 - Inspection surfaces: MCP `tools/list` endpoint reveals tool annotations
 - Failure visibility: `ValueError` raised for missing parameters, logged with tool name
 - Redaction constraints: none (tool names and annotations are not sensitive)
+- **Diagnostic check:** Run server and inspect logs for annotation hints (e.g., `Registered write tool: mist_update_wlan [destructiveHint=True]`)
 
 ## Integration Closure
 
@@ -51,7 +52,7 @@
   - Verify: `pytest tests/test_server.py -xvs` passes all existing tests; `bash scripts/verify_s04.sh` passes.
   - Done when: All 61 existing tests pass with the new manual registration pattern, and S04 verification script still works.
 
-- [ ] **T02: Add annotation hints (readOnlyHint/destructiveHint)** `est:30m`
+- [x] **T02: Add annotation hints (readOnlyHint/destructiveHint)** `est:30m`
   - Why: Fulfill R010: tools that could disrupt network connectivity or security must include `destructiveHint=True`, triggering LLM permission dialog.
   - Files: `mist_mcp/server.py`, `tests/test_server.py`
   - Do: In `register_tools`, add `annotations={"readOnlyHint": True}` for 10 read tools (tier1 and tier2). Add `annotations={"destructiveHint": True}` for 4 write tools (tier3). Ensure annotations are passed to `mcp.add_tool()`.
