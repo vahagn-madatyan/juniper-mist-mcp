@@ -19,6 +19,61 @@ import pytest
 from mist_mcp.server import register_tools, reset_tool_registration
 
 
+# =============================================================================
+# Test Isolation Helpers and Fixtures
+# =============================================================================
+
+
+def reset_tools() -> None:
+    """Reset tool registration state for test isolation.
+    
+    Clears the global registration flag and attempts to clear registered tools
+    from the MCP instance. Uses subprocess-based approach for complete isolation.
+    """
+    # Reset the flag first
+    reset_tool_registration()
+    
+    # Try to clear tools from MCP instance if possible
+    # This is best-effort - subprocess tests provide complete isolation
+    try:
+        from mist_mcp.server import mcp
+        if hasattr(mcp, '_tools'):
+            # FastMCP stores tools internally - try to clear them
+            if hasattr(mcp._tools, 'clear'):
+                mcp._tools.clear()
+            elif hasattr(mcp._tools, '__iter__'):
+                # Convert to list first to avoid modification during iteration
+                tools_list = list(mcp._tools)
+                for tool in tools_list:
+                    try:
+                        mcp._tools.discard(tool)
+                    except Exception:
+                        pass
+    except Exception:
+        # If we can't clear, tests will use subprocess for isolation
+        pass
+
+
+@pytest.fixture(autouse=True)
+def clean_mcp():
+    """Pytest fixture that ensures clean MCP tool state before each test.
+    
+    This fixture runs automatically before each test to ensure test isolation.
+    It resets the tool registration state to prevent duplicate registrations
+    and test interference.
+    """
+    # Reset before test
+    reset_tools()
+    yield
+    # Reset after test as well for cleanup
+    reset_tools()
+
+
+# =============================================================================
+# Helper Functions
+# =============================================================================
+
+
 def send_jsonrpc_via_stdio(
     server_process: subprocess.Popen, method: str, params: dict | None = None
 ) -> dict[str, Any]:
@@ -1586,6 +1641,74 @@ for tool_name in read_tools:
     annotations = tool_annotations[tool_name]
     assert annotations is not None, f"{tool_name} has no annotations"
     assert annotations.readOnlyHint is True, f"{tool_name} missing readOnlyHint=True"
+
+print("PASSED")
+"""
+        ],
+        capture_output=True,
+        text=True,
+        cwd=Path(__file__).parent.parent,
+    )
+    
+    assert result.returncode == 0, f"Subprocess test failed:\nSTDOUT: {result.stdout}\nSTDERR: {result.stderr}"
+    assert "PASSED" in result.stdout
+
+
+def test_annotation_persistence():
+    """Test that tool annotations persist correctly across tool listing.
+
+    Verifies that when tools are registered and then listed via mcp.list_tools(),
+    the annotations (readOnlyHint/destructiveHint) are correctly preserved and
+    accessible. This ensures MCP clients receive proper tool metadata.
+    
+    Note: This test runs in a subprocess to ensure clean MCP state.
+    """
+    import subprocess
+    import sys
+    
+    # Run in subprocess to ensure clean MCP state
+    result = subprocess.run(
+        [
+            sys.executable, "-c",
+            """
+import asyncio
+from mist_mcp.server import mcp, register_tools, reset_tool_registration
+
+reset_tool_registration()
+register_tools(enable_write=True)
+
+async def check_annotation_persistence():
+    # List tools multiple times to verify annotations persist
+    tools_first = await mcp.list_tools()
+    tools_second = await mcp.list_tools()
+    
+    # Check annotations are present and correct
+    results = []
+    
+    for tool in tools_first:
+        name = tool.name
+        annotations = tool.annotations
+        results.append((name, annotations))
+    
+    # Verify first call
+    for name, annotations in results:
+        if name.startswith("mist_"):
+            assert annotations is not None, f"{name} lost annotations on first list"
+    
+    # Verify second call returns same annotations
+    tools_second_dict = {t.name: t.annotations for t in tools_second}
+    for name, annotations in results:
+        assert tools_second_dict[name] is not None, f"{name} lost annotations on second list"
+        # Verify annotation attributes are accessible
+        if "update" in name or "manage" in name:
+            assert tools_second_dict[name].destructiveHint is True, f"{name} destructiveHint not persistent"
+        else:
+            assert tools_second_dict[name].readOnlyHint is True, f"{name} readOnlyHint not persistent"
+    
+    return True
+
+result = asyncio.run(check_annotation_persistence())
+assert result is True, "Annotation persistence check failed"
 
 print("PASSED")
 """

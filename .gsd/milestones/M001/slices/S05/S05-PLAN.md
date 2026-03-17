@@ -67,7 +67,7 @@
   - Verify: Write a test that verifies write tools are missing when `enable_write=False`. Update existing tool signature tests to conditionally check write tools.
   - Done when: Starting server without flag shows only 10 tools; with flag shows 14 tools.
 
-- [ ] **T04: Update tests for safety layers** `est:45m`
+- [x] **T04: Update tests for safety layers** `est:45m`
   - Why: Ensure the safety layer behavior is covered by tests and regressions are caught.
   - Files: `tests/test_server.py`, `mist_mcp/server.py`
   - Do: Add tests: `test_write_tools_not_registered_by_default()`, `test_write_tools_registered_with_flag()`, `test_read_tools_have_readonly_hint()`, `test_write_tools_have_destructive_hint()`. Update existing tool signature tests to handle conditional registration. Ensure test isolation (clear mcp tools between tests).
