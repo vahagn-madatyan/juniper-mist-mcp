@@ -706,6 +706,61 @@ async def mist_get_device_config_cmd(
     return serialize_api_response(response)
 
 
+@mcp.tool
+async def mist_update_wlan(
+    ctx: Context,
+    org: str,
+    wlan_id: str,
+    body: dict[str, Any],
+) -> dict[str, Any]:
+    """Update an existing WLAN configuration in an organization.
+
+    Updates the WLAN profile (SSID) with the specified configuration changes.
+    This is a write operation that modifies the WLAN settings in Mist.
+
+    Note: To get a list of WLANs and their IDs, use the mist_list_wlans tool first.
+
+    Args:
+        ctx: FastMCP context with lifespan data.
+        org: Organization name (must be configured in .env).
+        wlan_id: Mist WLAN ID (UUID) to update. Get this from mist_list_wlans.
+        body: Dictionary containing the WLAN configuration fields to update.
+              Example: {"ssid": "New SSID Name", "enabled": true, "auth": {"type": "wpa3"}}
+
+    Returns:
+        Dict with status_code, error flag, data, and pagination info.
+    """
+    logger.info(f"Tool called: mist_update_wlan(org={org}, wlan_id={wlan_id}, body={body})")
+
+    lifespan_ctx = ctx.lifespan_context
+    session_manager = lifespan_ctx.get("session_manager")
+
+    if session_manager is None:
+        return {"error": True, "status_code": None, "data": "No session manager available"}
+
+    # Validate org
+    validate_org(org, session_manager)
+
+    # Get authenticated session
+    session = session_manager.get_session(org)
+
+    # Get org_id from org name
+    org_id = get_org_id(org, session)
+
+    # Import the wlans function
+    from mistapi.api.v1.orgs import wlans as org_wlans
+
+    # Call the API
+    response = org_wlans.updateOrgWlan(
+        session,
+        org_id,
+        wlan_id,
+        body,
+    )
+
+    return serialize_api_response(response)
+
+
 # =============================================================================
 # CLI and Server Entry Point
 # =============================================================================

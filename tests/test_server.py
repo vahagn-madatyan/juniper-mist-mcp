@@ -757,5 +757,53 @@ def test_mist_get_device_config_cmd_signature():
     assert "mist_get_device_config_cmd" in tool_names
 
 
+# =============================================================================
+# Tests for tier3 write tools (T01-T04)
+# =============================================================================
+
+
+def test_mist_update_wlan_signature():
+    """Test that mist_update_wlan tool exists and is callable."""
+    import asyncio
+    from mist_mcp.server import mcp
+
+    async def check_tools():
+        tools = await mcp.list_tools()
+        return [t.name for t in tools]
+
+    tool_names = asyncio.run(check_tools())
+    assert "mist_update_wlan" in tool_names
+
+
+def test_mist_update_wlan_invalid_org():
+    """Test that mist_update_wlan validates org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    with pytest.raises(ValueError) as exc_info:
+        validate_org("fake_update_wlan_org", session_manager)
+
+    assert "not configured" in str(exc_info.value).lower()
+
+
+def test_mist_update_wlan_valid_org():
+    """Test that mist_update_wlan accepts valid org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    validate_org("example_org", session_manager)
+    validate_org("acme_corp", session_manager)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -19,6 +19,17 @@
 - `pytest tests/test_server.py -v` — all tests pass (including new tier3 tool tests)
 - `python3 -c "import asyncio; from mist_mcp.server import mcp; print([t.name for t in asyncio.run(mcp.list_tools())])"` — includes the four new tool names
 
+### Diagnostic Verification
+
+- `pytest tests/test_server.py -k "invalid_org" -v` — all org validation tests pass, verifying that invalid orgs properly raise errors with "not configured" in error message
+
+## Observability / Diagnostics
+
+- All write tools log invocation via `logger.info()` with org and relevant parameters (excluding sensitive body content)
+- API errors from Mist are captured in serialized response with `error: true` flag and status_code
+- No sensitive data (API tokens, credentials) is logged — only org name and operation type
+- Tool signature and parameter names are visible in MCP introspection for debugging
+
 ## Integration Closure
 
 - Upstream surfaces consumed: `mist_mcp/server.py` (tool decorator pattern), `mist_mcp/session.py` (session manager), `mist_mcp/config.py` (org validation)
@@ -27,7 +38,7 @@
 
 ## Tasks
 
-- [ ] **T01: WLAN update tool** `est:45m`
+- [x] **T01: WLAN update tool** `est:45m`
   - Why: Establish pattern for simplest write operation (single update method)
   - Files: `mist_mcp/server.py`, `tests/test_server.py`
   - Do: Implement `mist_update_wlan` tool using `mistapi.api.v1.orgs.wlans.updateOrgWlan`. Accept org, wlan_id, body parameters. Validate org, get session, get org_id, call API, serialize response. Add comprehensive tests including mock API calls.
