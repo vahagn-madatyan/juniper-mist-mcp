@@ -10,7 +10,7 @@ MSP engineers can use Claude Desktop (or other MCP clients) to monitor, troubles
 
 ## Current State
 
-S03 (Config viewing tools/tier2) complete. Server now provides 9 read tools total: 5 tier1 (device stats, SLE metrics, client stats, alarms, events) + 4 tier2 (WLANs, inventory, RF templates, device config). All 37 tests pass. Seven requirements validated (R001, R002, R003, R004, R005, R006, R012).
+M001 complete. The Juniper Mist MCP server is production-ready with 14 tools (10 read, 4 write), four-layer safety model, multi-tenant org routing across 5 Mist regions, both stdio and HTTP transports, and comprehensive MSP deployment documentation. All 103 tests pass. All 14 requirements (R001–R014) validated.
 
 ## Architecture / Key Patterns
 
@@ -18,9 +18,11 @@ S03 (Config viewing tools/tier2) complete. Server now provides 9 read tools tota
 - **Authentication**: Static API tokens per customer org stored in .env
 - **Multi-tenancy**: Each tool call includes `org` parameter to route to the right customer
 - **Regional support**: Configurable per org across 5 Mist regions (api.mist.com, api.eu.mist.com, etc.)
-- **Safety**: Four-layer safety model: read-only default, explicit write enable flag, destructive hints, platform validation
+- **Safety**: Four-layer safety model: read-only default, explicit write enable flag (`--enable-write-tools`), destructive hints via MCP annotations, pre-flight platform validation
 - **Transport**: Both stdio (local dev) and streamable HTTP (centralized SaaS deployment)
 - **Tool naming**: `mist_{verb}_{resource}` convention following Zscaler reference patterns
+- **Tool registration**: Manual `mcp.add_tool()` for conditional registration and annotations
+- **Write tools**: Multi-action pattern with `action` parameter (create/update/delete) per resource
 
 ## Capability Contract
 
@@ -28,5 +30,4 @@ See `.gsd/REQUIREMENTS.md` for the explicit capability contract, requirement sta
 
 ## Milestone Sequence
 
-- [ ] M001: Juniper Mist MCP Server — Production-ready MCP server with full read/write capabilities and MSP multi-tenancy safety
-</result>
+- [x] M001: Juniper Mist MCP Server — Production-ready MCP server with 14 tools, four-layer safety, multi-tenant org routing, and MSP deployment docs. All 14 requirements validated. 103 tests pass.
