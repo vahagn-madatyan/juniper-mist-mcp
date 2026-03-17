@@ -22,7 +22,7 @@
 
 ## Tasks
 
-- [ ] **T01: Create behavioral tests for rate limit handling and success tracking** `est:60m`
+- [x] **T01: Create behavioral tests for rate limit handling and success tracking** `est:60m`
   - Why: Fulfills R013 — need to verify that the server handles rate limits gracefully via mistapi's built-in retry logic and that success tracking (status codes, error flags, pagination) works correctly across all response types.
   - Files: `tests/test_rate_limit.py`, `tests/test_server.py` (optional updates)
   - Do: Create new test file with mocks for mistapi.APISession and APIResponse to simulate 429 rate limit responses, verify error serialization. Test success tracking: verify serialize_api_response handles success, error, pagination correctly. Use existing test patterns from test_server.py (subprocess isolation, MagicMock). Ensure tests cover all response fields (status_code, error, data, has_more, next_page). Mock the SDK's built-in retry behavior (or trust it) and ensure our tools don't crash.
@@ -50,3 +50,28 @@
 - `scripts/verify_s06.sh`
 - `tests/test_server.py` (optional updates)
 - `mist_mcp/server.py` (optional updates to improve error handling)
+
+## Observability / Diagnostics
+
+For this slice, observability is focused on **test verification signals** rather than runtime diagnostics:
+
+- **Test Coverage Signals**: The rate limit tests verify that serialize_api_response correctly handles:
+  - 429 responses with `error=True` and preserved error data
+  - 5xx errors with proper error flagging
+  - Pagination metadata (`has_more`, `next_page`)
+  
+- **Diagnostic Failures**: When tests fail, pytest provides:
+  - Explicit assertion failures with expected vs actual values
+  - Clear test names describing what failed (e.g., `test_rate_limit_429_response`)
+  - Verbose output via `-v` flag showing test class and method names
+
+- **No Runtime Changes**: This slice adds unit tests only; no runtime observability changes required (tests verify existing serialize_api_response behavior).
+
+## Verification Summary
+
+| Check | Status |
+|-------|--------|
+| pytest tests/test_rate_limit.py -v | ✓ PASS (22 tests) |
+| pytest tests/ (no regression) | ✓ PASS (103 tests) |
+| docs/msp-deployment.md exists | ⏳ Pending (T02) |
+| scripts/verify_s06.sh passes | ⏳ Pending (T03) |
