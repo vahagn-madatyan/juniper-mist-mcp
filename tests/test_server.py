@@ -15,6 +15,9 @@ from typing import Any
 
 import pytest
 
+# Import register_tools for tests that verify tool registration
+from mist_mcp.server import register_tools
+
 
 def send_jsonrpc_via_stdio(
     server_process: subprocess.Popen, method: str, params: dict | None = None
@@ -213,6 +216,9 @@ def test_tier1_tools_registered():
     import asyncio
     from mist_mcp.server import mcp
 
+    # Register tools before checking
+    register_tools(enable_write=True)
+
     async def check_tools():
         tools = await mcp.list_tools()
         return [t.name for t in tools]
@@ -238,6 +244,9 @@ def test_client_stats_signature():
     import asyncio
     from mist_mcp.server import mcp
 
+    # Register tools before checking
+    register_tools(enable_write=True)
+
     async def check_tools():
         tools = await mcp.list_tools()
         return [t.name for t in tools]
@@ -251,6 +260,9 @@ def test_alarms_signature():
     import asyncio
     from mist_mcp.server import mcp
 
+    # Register tools before checking
+    register_tools(enable_write=True)
+
     async def check_tools():
         tools = await mcp.list_tools()
         return [t.name for t in tools]
@@ -263,6 +275,9 @@ def test_site_events_signature():
     """Test that mist_get_site_events tool exists and is callable."""
     import asyncio
     from mist_mcp.server import mcp
+
+    # Register tools before checking
+    register_tools(enable_write=True)
 
     async def check_tools():
         tools = await mcp.list_tools()
@@ -554,6 +569,9 @@ def test_wlans_signature():
     import asyncio
     from mist_mcp.server import mcp
 
+    # Register tools before checking
+    register_tools(enable_write=True)
+
     async def check_tools():
         tools = await mcp.list_tools()
         return [t.name for t in tools]
@@ -566,6 +584,9 @@ def test_rf_templates_signature():
     """Test that mist_get_rf_templates tool exists and is callable."""
     import asyncio
     from mist_mcp.server import mcp
+
+    # Register tools before checking
+    register_tools(enable_write=True)
 
     async def check_tools():
         tools = await mcp.list_tools()
@@ -647,6 +668,9 @@ def test_tier2_tools_registered():
     """
     import asyncio
     from mist_mcp.server import mcp
+
+    # Register tools before checking
+    register_tools(enable_write=True)
 
     async def check_tools():
         tools = await mcp.list_tools()
@@ -736,6 +760,9 @@ def test_mist_get_inventory_signature():
     import asyncio
     from mist_mcp.server import mcp
 
+    # Register tools before checking
+    register_tools(enable_write=True)
+
     async def check_tools():
         tools = await mcp.list_tools()
         return [t.name for t in tools]
@@ -748,6 +775,9 @@ def test_mist_get_device_config_cmd_signature():
     """Test that mist_get_device_config_cmd tool exists and is callable."""
     import asyncio
     from mist_mcp.server import mcp
+
+    # Register tools before checking
+    register_tools(enable_write=True)
 
     async def check_tools():
         tools = await mcp.list_tools()
@@ -766,6 +796,9 @@ def test_mist_update_wlan_signature():
     """Test that mist_update_wlan tool exists and is callable."""
     import asyncio
     from mist_mcp.server import mcp
+
+    # Register tools before checking (with write tools enabled)
+    register_tools(enable_write=True)
 
     async def check_tools():
         tools = await mcp.list_tools()
@@ -809,6 +842,9 @@ def test_mist_manage_nac_rules_signature():
     """Test that mist_manage_nac_rules tool exists and is callable."""
     import asyncio
     from mist_mcp.server import mcp
+
+    # Register tools before checking (with write tools enabled)
+    register_tools(enable_write=True)
 
     async def check_tools():
         tools = await mcp.list_tools()
@@ -960,6 +996,9 @@ def test_mist_manage_wxlan_signature():
     """Test that mist_manage_wxlan tool exists and is callable."""
     import asyncio
     from mist_mcp.server import mcp
+
+    # Register tools before checking (with write tools enabled)
+    register_tools(enable_write=True)
 
     async def check_tools():
         tools = await mcp.list_tools()
@@ -1116,6 +1155,9 @@ def test_mist_manage_security_policies_signature():
     """Test that mist_manage_security_policies tool exists and is callable."""
     import asyncio
     from mist_mcp.server import mcp
+
+    # Register tools before checking (with write tools enabled)
+    register_tools(enable_write=True)
 
     async def check_tools():
         tools = await mcp.list_tools()

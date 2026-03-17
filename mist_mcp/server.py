@@ -160,7 +160,6 @@ mcp = FastMCP(SERVER_NAME, lifespan=app_lifespan)
 # =============================================================================
 
 
-@mcp.tool
 async def mist_list_orgs(ctx: Context) -> list[dict[str, Any]]:
     """List configured customer organizations and their Mist regions.
 
@@ -192,7 +191,6 @@ async def mist_list_orgs(ctx: Context) -> list[dict[str, Any]]:
     return orgs
 
 
-@mcp.tool
 async def mist_get_device_stats(
     ctx: Context,
     org: str,
@@ -237,7 +235,6 @@ async def mist_get_device_stats(
     return serialize_api_response(response)
 
 
-@mcp.tool
 async def mist_get_sle_summary(
     ctx: Context,
     org: str,
@@ -298,7 +295,6 @@ async def mist_get_sle_summary(
     return serialize_api_response(response)
 
 
-@mcp.tool
 async def mist_get_client_stats(
     ctx: Context,
     org: str,
@@ -350,7 +346,6 @@ async def mist_get_client_stats(
     return serialize_api_response(response)
 
 
-@mcp.tool
 async def mist_get_alarms(
     ctx: Context,
     org: str,
@@ -415,7 +410,6 @@ async def mist_get_alarms(
     return serialize_api_response(response)
 
 
-@mcp.tool
 async def mist_get_site_events(
     ctx: Context,
     org: str,
@@ -472,7 +466,6 @@ async def mist_get_site_events(
     return serialize_api_response(response)
 
 
-@mcp.tool
 async def mist_list_wlans(
     ctx: Context,
     org: str,
@@ -524,7 +517,6 @@ async def mist_list_wlans(
     return serialize_api_response(response)
 
 
-@mcp.tool
 async def mist_get_rf_templates(
     ctx: Context,
     org: str,
@@ -576,7 +568,6 @@ async def mist_get_rf_templates(
     return serialize_api_response(response)
 
 
-@mcp.tool
 async def mist_get_inventory(
     ctx: Context,
     org: str,
@@ -642,7 +633,6 @@ async def mist_get_inventory(
     return serialize_api_response(response)
 
 
-@mcp.tool
 async def mist_get_device_config_cmd(
     ctx: Context,
     org: str,
@@ -706,7 +696,6 @@ async def mist_get_device_config_cmd(
     return serialize_api_response(response)
 
 
-@mcp.tool
 async def mist_update_wlan(
     ctx: Context,
     org: str,
@@ -761,7 +750,6 @@ async def mist_update_wlan(
     return serialize_api_response(response)
 
 
-@mcp.tool
 async def mist_manage_nac_rules(
     ctx: Context,
     org: str,
@@ -871,7 +859,6 @@ async def mist_manage_nac_rules(
     return serialize_api_response(response)
 
 
-@mcp.tool
 async def mist_manage_wxlan(
     ctx: Context,
     org: str,
@@ -982,7 +969,6 @@ async def mist_manage_wxlan(
     return serialize_api_response(response)
 
 
-@mcp.tool
 async def mist_manage_security_policies(
     ctx: Context,
     org: str,
@@ -1094,6 +1080,68 @@ async def mist_manage_security_policies(
 
 
 # =============================================================================
+# Tool Registration
+# =============================================================================
+
+# Flag to prevent duplicate registration within the same process
+_tools_registered = False
+
+
+def register_tools(enable_write: bool = False) -> None:
+    """Manually register all MCP tools with the server.
+
+    This decouples tool registration from import time, enabling conditional
+    registration based on the enable_write flag.
+
+    Args:
+        enable_write: If True, register write tools (tier3). Default False.
+    """
+    global _tools_registered
+    
+    # Prevent duplicate registration
+    if _tools_registered:
+        logger.warning("Tools already registered, skipping duplicate registration")
+        return
+    
+    # Tier 1 + Tier 2 read tools (10 tools)
+    read_tools = [
+        mist_list_orgs,
+        mist_get_device_stats,
+        mist_get_sle_summary,
+        mist_get_client_stats,
+        mist_get_alarms,
+        mist_get_site_events,
+        mist_list_wlans,
+        mist_get_rf_templates,
+        mist_get_inventory,
+        mist_get_device_config_cmd,
+    ]
+    
+    # Tier 3 write tools (4 tools)
+    write_tools = [
+        mist_update_wlan,
+        mist_manage_nac_rules,
+        mist_manage_wxlan,
+        mist_manage_security_policies,
+    ]
+    
+    # Register read tools (always registered)
+    for tool_func in read_tools:
+        mcp.add_tool(tool_func)
+        logger.info(f"Registered read tool: {tool_func.__name__}")
+    
+    # Register write tools based on enable_write flag
+    # For now, register all write tools regardless of flag (T01 step 2)
+    # In future iterations, this can be made conditional
+    for tool_func in write_tools:
+        mcp.add_tool(tool_func)
+        logger.info(f"Registered write tool: {tool_func.__name__}")
+    
+    _tools_registered = True
+    logger.info(f"Tool registration complete: {len(read_tools)} read tools, {len(write_tools)} write tools")
+
+
+# =============================================================================
 # CLI and Server Entry Point
 # =============================================================================
 
@@ -1156,6 +1204,9 @@ def main():
 
     if args.enable_write_tools:
         logger.warning("--enable-write-tools flag is set but write tools are not yet implemented")
+
+    # Register tools before running the server
+    register_tools(enable_write=args.enable_write_tools)
 
     # Run the server with the appropriate transport
     if args.transport == "stdio":

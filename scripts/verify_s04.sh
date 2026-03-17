@@ -52,7 +52,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 async def check_tools():
-    from mist_mcp.server import mcp
+    from mist_mcp.server import mcp, register_tools
+    
+    # Register tools before checking
+    register_tools(enable_write=True)
     
     tools = await mcp.list_tools()
     return [t.name for t in tools]
@@ -184,9 +187,10 @@ TOOL_COUNT=$($PYTHON_BIN -c "
 import asyncio
 import sys
 sys.path.insert(0, '.')
-from mist_mcp.server import mcp
+from mist_mcp.server import mcp, register_tools
 
 async def count():
+    register_tools(enable_write=True)
     tools = await mcp.list_tools()
     return len(tools)
 
@@ -208,9 +212,10 @@ $PYTHON_BIN -c "
 import asyncio
 import sys
 sys.path.insert(0, '.')
-from mist_mcp.server import mcp
+from mist_mcp.server import mcp, register_tools
 
 async def list_tier3():
+    register_tools(enable_write=True)
     tools = await mcp.list_tools()
     tier3_tools = [t.name for t in tools if 'update_wlan' in t.name or 'manage_nac' in t.name or 'manage_wxlan' in t.name or 'manage_security' in t.name]
     return tier3_tools

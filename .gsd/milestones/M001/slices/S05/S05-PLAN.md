@@ -44,7 +44,7 @@
 
 ## Tasks
 
-- [ ] **T01: Refactor tool registration to manual pattern** `est:45m`
+- [x] **T01: Refactor tool registration to manual pattern** `est:45m`
   - Why: Remove `@mcp.tool` decorators and implement manual registration via `mcp.add_tool()` to allow conditional registration. This is the foundation for safety layers.
   - Files: `mist_mcp/server.py`, `tests/test_server.py`, `scripts/verify_s04.sh`
   - Do: Remove all 14 `@mcp.tool` decorators. Define a `register_tools(enable_write: bool)` function that registers all tools manually. Keep the `mcp` instance global but don't call `register_tools` yet (all tools still registered). Update tests that rely on tool registration to call `register_tools(enable_write=True)` before checking. Update `scripts/verify_s04.sh` to call `register_tools(enable_write=True)` before checking tool list.
