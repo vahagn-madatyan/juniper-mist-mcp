@@ -55,7 +55,7 @@ This milestone is complete only when all are true:
   > After this: Agent can query device stats, SLE metrics, client stats, alarms, events across customer orgs; tools respect rate limits
 - [x] **S03: Config viewing tools (tier2)** `risk:medium` `depends:[S02]`
   > After this: Agent can inspect WLAN configs, inventory, RF templates, device CLI config; all read tools work together
-- [ ] **S04: Write tools (tier3)** `risk:high` `depends:[S03]`
+- [x] **S04: Write tools (tier3)** `risk:high` `depends:[S03]`
   > After this: Agent can modify WLANs, NAC rules, WXLAN, security policies when write tools enabled; basic validation in place
 - [ ] **S05: Safety layers & multi-tenancy** `risk:medium` `depends:[S04]`
   > After this: Write tools disabled by default, require --enable-write-tools flag; destructive hints for risky ops; platform validation active
