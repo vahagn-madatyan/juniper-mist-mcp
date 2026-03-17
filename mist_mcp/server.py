@@ -982,6 +982,117 @@ async def mist_manage_wxlan(
     return serialize_api_response(response)
 
 
+@mcp.tool
+async def mist_manage_security_policies(
+    ctx: Context,
+    org: str,
+    action: str,
+    policy_id: str | None = None,
+    body: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Manage security policies in an organization.
+
+    Creates, updates, or deletes security policies for network security
+    configuration. This is a write operation that modifies security policy
+    settings in Mist.
+
+    Actions:
+    - create: Create a new security policy (requires body, policy_id ignored)
+    - update: Update an existing security policy (requires both policy_id and body)
+    - delete: Delete a security policy (requires policy_id, body ignored)
+
+    Note: To get a list of security policies and their IDs, use the listOrgSecPolicies API
+    or check the Mist portal.
+
+    Args:
+        ctx: FastMCP context with lifespan data.
+        org: Organization name (must be configured in .env).
+        action: Action to perform - "create", "update", or "delete" (case-insensitive).
+        policy_id: Security policy ID (UUID) for update/delete actions. Get this from listOrgSecPolicies.
+        body: Dictionary containing the security policy configuration.
+              Example: {"name": "Corp Security Policy", "rules": [{"action": "allow"}]}
+
+    Returns:
+        Dict with status_code, error flag, data, and pagination info.
+
+    Raises:
+        ValueError: If action is invalid or required parameters are missing.
+    """
+    # Normalize action to lowercase for case-insensitive comparison
+    action_lower = action.lower()
+    valid_actions = ["create", "update", "delete"]
+
+    # Validate action parameter
+    if action_lower not in valid_actions:
+        raise ValueError(
+            f"Invalid action '{action}'. Must be one of: {valid_actions}"
+        )
+
+    # Validate required parameters per action
+    if action_lower == "create":
+        if body is None:
+            raise ValueError(
+                "Action 'create' requires 'body' parameter to be provided"
+            )
+    elif action_lower == "update":
+        if policy_id is None:
+            raise ValueError(
+                "Action 'update' requires 'policy_id' parameter to be provided"
+            )
+        if body is None:
+            raise ValueError(
+                "Action 'update' requires 'body' parameter to be provided"
+            )
+    elif action_lower == "delete":
+        if policy_id is None:
+            raise ValueError(
+                "Action 'delete' requires 'policy_id' parameter to be provided"
+            )
+
+    logger.info(f"Tool called: mist_manage_security_policies(org={org}, action={action_lower}, policy_id={policy_id})")
+
+    lifespan_ctx = ctx.lifespan_context
+    session_manager = lifespan_ctx.get("session_manager")
+
+    if session_manager is None:
+        return {"error": True, "status_code": None, "data": "No session manager available"}
+
+    # Validate org
+    validate_org(org, session_manager)
+
+    # Get authenticated session
+    session = session_manager.get_session(org)
+
+    # Get org_id from org name
+    org_id = get_org_id(org, session)
+
+    # Import the secpolicies function
+    from mistapi.api.v1.orgs import secpolicies as org_secpolicies
+
+    # Call the appropriate API method based on action
+    if action_lower == "create":
+        response = org_secpolicies.createOrgSecPolicy(
+            session,
+            org_id,
+            body,
+        )
+    elif action_lower == "update":
+        response = org_secpolicies.updateOrgSecPolicy(
+            session,
+            org_id,
+            policy_id,
+            body,
+        )
+    else:  # delete
+        response = org_secpolicies.deleteOrgSecPolicy(
+            session,
+            org_id,
+            policy_id,
+        )
+
+    return serialize_api_response(response)
+
+
 # =============================================================================
 # CLI and Server Entry Point
 # =============================================================================

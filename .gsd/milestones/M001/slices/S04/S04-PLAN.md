@@ -56,7 +56,7 @@
   - Do: Implement `mist_manage_wxlan` tool using `mistapi.api.v1.orgs.wxrules` methods. Same pattern as NAC rules. Add tests.
   - Verify: `pytest tests/test_server.py::test_mist_manage_wxlan_signature -v` passes; tool appears in registered tools list.
   - Done when: Tool supports create, update, delete actions with validation.
-- [ ] **T04: Security policies tool + verification script** `est:45m`
+- [x] **T04: Security policies tool + verification script** `est:45m`
   - Why: Complete tier3 toolset and provide slice-level verification
   - Files: `mist_mcp/server.py`, `tests/test_server.py`, `scripts/verify_s04.sh`
   - Do: Implement `mist_manage_security_policies` tool using `mistapi.api.v1.orgs.secpolicies` methods. Same pattern as NAC/WXLAN. Add tests. Create verification script `scripts/verify_s04.sh` that checks 14 tools registered and runs tier3 tool tests.
