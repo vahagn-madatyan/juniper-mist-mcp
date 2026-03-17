@@ -9,6 +9,7 @@ Provides FastMCP server with:
 import argparse
 import asyncio
 import logging
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -81,6 +82,99 @@ def serialize_api_response(response: __api_response.APIResponse) -> dict[str, An
         result["has_more"] = False
 
     return result
+
+
+# UUID pattern for validating Mist resource IDs
+UUID_PATTERN = re.compile(
+    r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+    re.IGNORECASE
+)
+
+
+def validate_platform_constraints(tool_name: str, params: dict[str, Any]) -> None:
+    """Validate platform constraints before API call.
+
+    This provides an additional safety layer that checks Mist platform-specific
+    constraints before making API calls. It validates ID formats, required field
+    presence, and flags suspicious inputs.
+
+    Args:
+        tool_name: Name of the tool being called.
+        params: Dictionary of parameters passed to the tool.
+
+    Raises:
+        ValueError: If validation fails for clearly invalid inputs.
+    """
+    logger.debug(f"Validating platform constraints for {tool_name} with params: {params}")
+
+    if tool_name == "mist_update_wlan":
+        # Validate wlan_id is present and non-empty
+        wlan_id = params.get("wlan_id")
+        if wlan_id is None or (isinstance(wlan_id, str) and not wlan_id.strip()):
+            logger.warning(f"Platform validation: wlan_id is empty for {tool_name}")
+            raise ValueError("wlan_id is required and cannot be empty")
+
+        # Check if it looks like a UUID (Mist uses UUIDs for IDs)
+        if isinstance(wlan_id, str):
+            # Log warning if not a valid UUID format but allow it (could be a name)
+            if not UUID_PATTERN.match(wlan_id):
+                logger.warning(
+                    f"Platform validation: wlan_id '{wlan_id}' does not match UUID format "
+                    f"for {tool_name}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                )
+
+    elif tool_name == "mist_manage_nac_rules":
+        action = params.get("action", "").lower()
+        rule_id = params.get("rule_id")
+
+        # For update and delete, validate rule_id is non-empty
+        if action in ("update", "delete"):
+            if rule_id is None or (isinstance(rule_id, str) and not rule_id.strip()):
+                logger.warning(f"Platform validation: rule_id is empty for {tool_name} action={action}")
+                raise ValueError("rule_id is required for update/delete actions and cannot be empty")
+
+            # Log warning if not UUID format
+            if isinstance(rule_id, str) and not UUID_PATTERN.match(rule_id):
+                logger.warning(
+                    f"Platform validation: rule_id '{rule_id}' does not match UUID format "
+                    f"for {tool_name}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                )
+
+    elif tool_name == "mist_manage_wxlan":
+        action = params.get("action", "").lower()
+        rule_id = params.get("rule_id")
+
+        # For update and delete, validate rule_id is non-empty
+        if action in ("update", "delete"):
+            if rule_id is None or (isinstance(rule_id, str) and not rule_id.strip()):
+                logger.warning(f"Platform validation: rule_id is empty for {tool_name} action={action}")
+                raise ValueError("rule_id is required for update/delete actions and cannot be empty")
+
+            # Log warning if not UUID format
+            if isinstance(rule_id, str) and not UUID_PATTERN.match(rule_id):
+                logger.warning(
+                    f"Platform validation: rule_id '{rule_id}' does not match UUID format "
+                    f"for {tool_name}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                )
+
+    elif tool_name == "mist_manage_security_policies":
+        action = params.get("action", "").lower()
+        policy_id = params.get("policy_id")
+
+        # For update and delete, validate policy_id is non-empty
+        if action in ("update", "delete"):
+            if policy_id is None or (isinstance(policy_id, str) and not policy_id.strip()):
+                logger.warning(f"Platform validation: policy_id is empty for {tool_name} action={action}")
+                raise ValueError("policy_id is required for update/delete actions and cannot be empty")
+
+            # Log warning if not UUID format
+            if isinstance(policy_id, str) and not UUID_PATTERN.match(policy_id):
+                logger.warning(
+                    f"Platform validation: policy_id '{policy_id}' does not match UUID format "
+                    f"for {tool_name}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                )
+
+    logger.debug(f"Platform validation passed for {tool_name}")
 
 
 def get_org_id(org: str, session: mistapi.APISession) -> str:
@@ -723,6 +817,9 @@ async def mist_update_wlan(
     """
     logger.info(f"Tool called: mist_update_wlan(org={org}, wlan_id={wlan_id}, body={body})")
 
+    # Validate platform constraints before API call
+    validate_platform_constraints("mist_update_wlan", {"wlan_id": wlan_id})
+
     lifespan_ctx = ctx.lifespan_context
     session_manager = lifespan_ctx.get("session_manager")
 
@@ -816,6 +913,9 @@ async def mist_manage_nac_rules(
             raise ValueError(
                 "Action 'delete' requires 'rule_id' parameter to be provided"
             )
+
+    # Validate platform constraints before API call
+    validate_platform_constraints("mist_manage_nac_rules", {"action": action_lower, "rule_id": rule_id})
 
     logger.info(f"Tool called: mist_manage_nac_rules(org={org}, action={action_lower}, rule_id={rule_id})")
 
@@ -927,6 +1027,9 @@ async def mist_manage_wxlan(
                 "Action 'delete' requires 'rule_id' parameter to be provided"
             )
 
+    # Validate platform constraints before API call
+    validate_platform_constraints("mist_manage_wxlan", {"action": action_lower, "rule_id": rule_id})
+
     logger.info(f"Tool called: mist_manage_wxlan(org={org}, action={action_lower}, rule_id={rule_id})")
 
     lifespan_ctx = ctx.lifespan_context
@@ -1036,6 +1139,9 @@ async def mist_manage_security_policies(
             raise ValueError(
                 "Action 'delete' requires 'policy_id' parameter to be provided"
             )
+
+    # Validate platform constraints before API call
+    validate_platform_constraints("mist_manage_security_policies", {"action": action_lower, "policy_id": policy_id})
 
     logger.info(f"Tool called: mist_manage_security_policies(org={org}, action={action_lower}, policy_id={policy_id})")
 

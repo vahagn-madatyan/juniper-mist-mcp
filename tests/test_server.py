@@ -1722,5 +1722,111 @@ print("PASSED")
     assert "PASSED" in result.stdout
 
 
+# =============================================================================
+# Tests for platform validation (T06)
+# =============================================================================
+
+
+def test_platform_validation_rejects_invalid_ids():
+    """Test that platform validation rejects invalid/missing IDs.
+
+    Verifies that validate_platform_constraints raises ValueError when
+    write tools are called with empty or invalid IDs, providing an
+    additional safety layer before making API calls to Mist.
+    """
+    from mist_mcp.server import validate_platform_constraints
+    import pytest
+
+    # Test 1: mist_update_wlan with empty wlan_id
+    with pytest.raises(ValueError) as exc_info:
+        validate_platform_constraints("mist_update_wlan", {"wlan_id": ""})
+    assert "wlan_id" in str(exc_info.value).lower() and "empty" in str(exc_info.value).lower()
+
+    # Test 2: mist_update_wlan with None wlan_id
+    with pytest.raises(ValueError) as exc_info:
+        validate_platform_constraints("mist_update_wlan", {"wlan_id": None})
+    assert "wlan_id" in str(exc_info.value).lower() and "empty" in str(exc_info.value).lower()
+
+    # Test 3: mist_manage_nac_rules update with empty rule_id
+    with pytest.raises(ValueError) as exc_info:
+        validate_platform_constraints("mist_manage_nac_rules", {"action": "update", "rule_id": ""})
+    assert "rule_id" in str(exc_info.value).lower() and "empty" in str(exc_info.value).lower()
+
+    # Test 4: mist_manage_nac_rules delete with empty rule_id
+    with pytest.raises(ValueError) as exc_info:
+        validate_platform_constraints("mist_manage_nac_rules", {"action": "delete", "rule_id": "   "})
+    assert "rule_id" in str(exc_info.value).lower() and "empty" in str(exc_info.value).lower()
+
+    # Test 5: mist_manage_wxlan update with empty rule_id
+    with pytest.raises(ValueError) as exc_info:
+        validate_platform_constraints("mist_manage_wxlan", {"action": "update", "rule_id": ""})
+    assert "rule_id" in str(exc_info.value).lower() and "empty" in str(exc_info.value).lower()
+
+    # Test 6: mist_manage_security_policies update with empty policy_id
+    with pytest.raises(ValueError) as exc_info:
+        validate_platform_constraints("mist_manage_security_policies", {"action": "update", "policy_id": ""})
+    assert "policy_id" in str(exc_info.value).lower() and "empty" in str(exc_info.value).lower()
+
+    # Test 7: mist_manage_security_policies delete with empty policy_id
+    with pytest.raises(ValueError) as exc_info:
+        validate_platform_constraints("mist_manage_security_policies", {"action": "delete", "policy_id": None})
+    assert "policy_id" in str(exc_info.value).lower() and "empty" in str(exc_info.value).lower()
+
+
+def test_platform_validation_accepts_valid_ids():
+    """Test that platform validation accepts valid UUIDs.
+
+    Verifies that validate_platform_constraints passes when given
+    properly formatted UUIDs, which are the standard ID format for
+    Mist API resources.
+    """
+    from mist_mcp.server import validate_platform_constraints
+    import uuid
+
+    valid_uuid = str(uuid.uuid4())
+
+    # All these should pass without raising
+    validate_platform_constraints("mist_update_wlan", {"wlan_id": valid_uuid})
+    validate_platform_constraints("mist_manage_nac_rules", {"action": "update", "rule_id": valid_uuid})
+    validate_platform_constraints("mist_manage_nac_rules", {"action": "delete", "rule_id": valid_uuid})
+    validate_platform_constraints("mist_manage_wxlan", {"action": "update", "rule_id": valid_uuid})
+    validate_platform_constraints("mist_manage_wxlan", {"action": "delete", "rule_id": valid_uuid})
+    validate_platform_constraints("mist_manage_security_policies", {"action": "update", "policy_id": valid_uuid})
+    validate_platform_constraints("mist_manage_security_policies", {"action": "delete", "policy_id": valid_uuid})
+
+    # Create should also pass (no ID required)
+    validate_platform_constraints("mist_manage_nac_rules", {"action": "create"})
+    validate_platform_constraints("mist_manage_wxlan", {"action": "create"})
+    validate_platform_constraints("mist_manage_security_policies", {"action": "create"})
+
+
+def test_platform_validation_logs_warnings_for_non_uuid():
+    """Test that platform validation logs warnings for non-UUID format IDs.
+
+    Verifies that while non-UUID format IDs are accepted (could be names),
+    a warning is logged for observability purposes.
+    """
+    import logging
+    from mist_mcp.server import validate_platform_constraints
+    import io
+
+    # Capture log output
+    log_capture = io.StringIO()
+    handler = logging.StreamHandler(log_capture)
+    handler.setLevel(logging.WARNING)
+    logger = logging.getLogger("mist_mcp.server")
+    logger.addHandler(handler)
+
+    try:
+        # Call with non-UUID string (should work but log warning)
+        validate_platform_constraints("mist_update_wlan", {"wlan_id": "my-wlan-name"})
+
+        # Check that a warning was logged
+        log_output = log_capture.getvalue()
+        assert "uuid" in log_output.lower(), f"Expected warning about UUID format, got: {log_output}"
+    finally:
+        logger.removeHandler(handler)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

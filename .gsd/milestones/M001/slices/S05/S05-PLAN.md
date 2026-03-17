@@ -81,9 +81,9 @@
   - Verify: Run `bash scripts/verify_s05.sh` and confirm it passes.
   - Done when: Verification script exits with code 0 and outputs success messages.
 
-- [ ] **T06: Add basic platform validation enhancement** `est:30m`
+- [x] **T06: Add basic platform validation enhancement** `est:30m`
   - Why: Fulfill R011: write operations validate against Mist platform constraints before submission.
-  - Files: `mist_mcp/server.py`
+  - Files: `mist_mcp/server.py`, `tests/test_server.py`
   - Do: Add a `validate_platform_constraints(tool_name: str, params: dict) -> None` function that performs basic validation (e.g., check UUID format for IDs, required fields per action). Call it from each write tool before API call. Log validation warnings.
   - Verify: Write a test that invalid parameters trigger validation error. Ensure existing tests still pass.
   - Done when: Validation function is called in all write tools and logs appropriate warnings.
