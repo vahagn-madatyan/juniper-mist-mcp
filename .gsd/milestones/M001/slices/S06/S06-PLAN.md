@@ -29,14 +29,14 @@
   - Verify: Run `pytest tests/test_rate_limit.py -v` and see all tests pass.
   - Done when: All new tests pass and cover rate limit, success tracking, error handling.
 
-- [ ] **T02: Create comprehensive MSP deployment documentation** `est:45m`
+- [x] **T02: Create comprehensive MSP deployment documentation** `est:45m`
   - Why: Fulfills R014 — MSPs need clear guidance on how to deploy and use the server in production, covering multi-org configuration, region mapping, safety flags, and transport modes.
   - Files: `docs/msp-deployment.md`, `.env.example` (reference)
   - Do: Create docs/ directory if missing. Write markdown documentation covering: 1) Multi-org .env structure (MIST_TOKEN_*, MIST_REGION_*), 2) Region mapping (5 Mist regions, custom hosts), 3) Safety flag usage (--enable-write-tools, read-only default), 4) Deployment patterns (stdio for Claude Desktop, HTTP for centralized SaaS), 5) Example commands and verification steps. Reference existing .env.example and command-line flags from server.py.
   - Verify: Check that `docs/msp-deployment.md` exists and contains all required sections.
   - Done when: Documentation is complete and ready for MSP operators.
 
-- [ ] **T03: Create slice verification script** `est:30m`
+- [x] **T03: Create slice verification script** `est:30m`
   - Why: Ensure the slice's deliverables (tests, documentation) are automatically verifiable, following the pattern established in S05.
   - Files: `scripts/verify_s06.sh`
   - Do: Create bash script that runs the new rate limit tests, checks for deployment documentation existence, and validates that the documentation includes key sections. Use colors and clear pass/fail output like verify_s05.sh. Optionally run a subset of existing tests to ensure no regression.
@@ -73,5 +73,5 @@ For this slice, observability is focused on **test verification signals** rather
 |-------|--------|
 | pytest tests/test_rate_limit.py -v | ✓ PASS (22 tests) |
 | pytest tests/ (no regression) | ✓ PASS (103 tests) |
-| docs/msp-deployment.md exists | ⏳ Pending (T02) |
-| scripts/verify_s06.sh passes | ⏳ Pending (T03) |
+| docs/msp-deployment.md exists | ✓ PASS |
+| scripts/verify_s06.sh passes | ✓ PASS |
