@@ -50,7 +50,7 @@
   - Do: Implement `mist_manage_nac_rules` tool using `mistapi.api.v1.orgs.nacrules` methods. Accept org, action, rule_id (optional), body (optional). Validate action is one of ["create","update","delete"], enforce required parameters (rule_id for update/delete, body for create/update). Add helper function for action validation if needed. Add tests for all three actions.
   - Verify: `pytest tests/test_server.py::test_mist_manage_nac_rules_signature -v` passes; tool appears in registered tools list.
   - Done when: Tool supports create, update, delete actions with validation.
-- [ ] **T03: WXLAN management tool** `est:45m`
+- [x] **T03: WXLAN management tool** `est:45m`
   - Why: Apply multi-action pattern to WXLAN microsegmentation rules
   - Files: `mist_mcp/server.py`, `tests/test_server.py`
   - Do: Implement `mist_manage_wxlan` tool using `mistapi.api.v1.orgs.wxrules` methods. Same pattern as NAC rules. Add tests.
