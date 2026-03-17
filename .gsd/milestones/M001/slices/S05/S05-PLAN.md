@@ -74,7 +74,7 @@
   - Verify: `pytest tests/test_server.py -xvs` passes all new and existing tests.
   - Done when: New safety tests pass and all tests run successfully.
 
-- [ ] **T05: Create verification script for S05** `est:30m`
+- [x] **T05: Create verification script for S05** `est:30m`
   - Why: Provide a standalone verification script that demonstrates the safety layers work as required.
   - Files: `scripts/verify_s05.sh`
   - Do: Create a new script that starts the server in both modes, queries tool list via JSON-RPC, checks tool counts and annotations. Use similar pattern to `verify_s04.sh`.
