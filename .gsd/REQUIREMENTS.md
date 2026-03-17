@@ -72,46 +72,46 @@ This file is the explicit capability and coverage contract for the project.
 
 ### R008 — Server starts with only read tools (tier1 and tier2) registered; write tools require explicit enable flag
 - Class: safety
-- Status: active
+- Status: validated
 - Description: Server starts with only read tools (tier1 and tier2) registered; write tools require explicit enable flag
 - Why it matters: Prevents accidental misconfiguration; MSPs can deploy read-only version to junior staff
 - Source: user
 - Primary owning slice: M001/S05
 - Supporting slices: M001/S04
-- Validation: unmapped
+- Validation: proved by S05 verification (scripts/verify_s05.sh exits 0, 71 pytest tests pass, conditional registration verified)
 - Notes: Must be configurable via command-line flag or env var
 
 ### R009 — Write tools (tier3) only registered when server started with --enable-write-tools flag (or equivalent env var)
 - Class: safety
-- Status: active
+- Status: validated
 - Description: Write tools (tier3) only registered when server started with --enable-write-tools flag (or equivalent env var)
 - Why it matters: Explicit opt-in for write capabilities reduces risk
 - Source: user
 - Primary owning slice: M001/S05
 - Supporting slices: M001/S04
-- Validation: unmapped
+- Validation: proved by S05 verification (verified with and without flag via test_server.py and verify_s05.sh)
 - Notes: Should support pattern matching: --write-tools "mist_update_*"
 
 ### R010 — Tools that could disrupt network connectivity or security include destructiveHint=True, triggering LLM permission dialog
 - Class: safety
-- Status: active
+- Status: validated
 - Description: Tools that could disrupt network connectivity or security include destructiveHint=True, triggering LLM permission dialog
 - Why it matters: Extra guard rail for high-risk operations like security policy changes
 - Source: user
 - Primary owning slice: M001/S05
 - Supporting slices: M001/S04
-- Validation: unmapped
+- Validation: proved by S05 verification (tool annotation hints verified via JSON-RPC)
 - Notes: Following MCP best practices for destructive operations
 
 ### R011 — Write operations validate against Mist platform constraints (e.g., template validation, config compatibility) before submission
 - Class: safety
-- Status: active
+- Status: validated
 - Description: Write operations validate against Mist platform constraints (e.g., template validation, config compatibility) before submission
 - Why it matters: Prevents configuration errors that Mist API would reject anyway
 - Source: user
 - Primary owning slice: M001/S05
 - Supporting slices: M001/S04
-- Validation: unmapped
+- Validation: proved by S05 verification (pre-flight validate_platform_constraints check implemented for all 4 write tools)
 - Notes: Leverages mistapi SDK validation where available
 
 ### R012 — Server supports both stdio transport (local Claude Desktop) and streamable HTTP transport (centralized SaaS deployment)
@@ -197,10 +197,10 @@ This file is the explicit capability and coverage contract for the project.
 | R005 | primary-user-loop | active | M001/S02 | M001/S01 | proved by S02 verification (24 tests pass, verify_s02.sh exits 0, all 5 tools registered and functional) |
 | R006 | admin/support | active | M001/S03 | M001/S02 | proved by S03 verification (37 tests pass, verify_s03.sh exits 0, all 4 tools registered and functional) |
 | R007 | primary-user-loop | validated | M001/S04 | M001/S03, M001/S05 | proved by S04 verification (61 tests pass, verify_s04.sh exits 0, all 4 write tools registered and functional) |
-| R008 | safety | active | M001/S05 | M001/S04 | unmapped |
-| R009 | safety | active | M001/S05 | M001/S04 | unmapped |
-| R010 | safety | active | M001/S05 | M001/S04 | unmapped |
-| R011 | safety | active | M001/S05 | M001/S04 | unmapped |
+| R008 | safety | validated | M001/S05 | M001/S04 | proved by S05 verification (scripts/verify_s05.sh exits 0, 71 pytest tests pass, conditional registration verified) |
+| R009 | safety | validated | M001/S05 | M001/S04 | proved by S05 verification (verified with and without flag via test_server.py and verify_s05.sh) |
+| R010 | safety | validated | M001/S05 | M001/S04 | proved by S05 verification (tool annotation hints verified via JSON-RPC) |
+| R011 | safety | validated | M001/S05 | M001/S04 | proved by S05 verification (pre-flight validate_platform_constraints check implemented for all 4 write tools) |
 | R012 | operability | active | M001/S01 | none | proved by S01 verification (CLI supports --transport stdio/http, verify_s01.sh confirms stdio works) |
 | R013 | quality-attribute | active | M001/S06 | M001/S01 | unmapped |
 | R014 | operability | active | M001/S06 | none | unmapped |
@@ -209,7 +209,7 @@ This file is the explicit capability and coverage contract for the project.
 
 ## Coverage Summary
 
-- Active requirements: 13
+- Active requirements: 9
 - Mapped to slices: 13
-- Validated: 1 (R007)
+- Validated: 5 (R007, R008, R009, R010, R011)
 - Unmapped active requirements: 0
