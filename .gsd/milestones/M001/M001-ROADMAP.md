@@ -59,7 +59,7 @@ This milestone is complete only when all are true:
   > After this: Agent can modify WLANs, NAC rules, WXLAN, security policies when write tools enabled; basic validation in place
 - [x] **S05: Safety layers & multi-tenancy** `risk:medium` `depends:[S04]`
   > After this: Write tools disabled by default, require --enable-write-tools flag; destructive hints for risky ops; platform validation active
-- [ ] **S06: Testing & validation** `risk:low` `depends:[S05]`
+- [x] **S06: Testing & validation** `risk:low` `depends:[S05]`
   > After this: All tools work with rate limit awareness; MSP deployment guide complete; behavioral tests verify success tracking
 
 ## Boundary Map
