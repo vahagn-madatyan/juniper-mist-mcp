@@ -1089,6 +1089,17 @@ async def mist_manage_security_policies(
 _tools_registered = False
 
 
+def reset_tool_registration() -> None:
+    """Reset the tool registration state for testing purposes.
+    
+    This allows tests to re-register tools with different flags.
+    Note: This only resets the flag; actual tool removal from MCP
+    requires a new MCP instance, which is not practical in tests.
+    """
+    global _tools_registered
+    _tools_registered = False
+
+
 def register_tools(enable_write: bool = False) -> None:
     """Manually register all MCP tools with the server.
 
@@ -1137,16 +1148,20 @@ def register_tools(enable_write: bool = False) -> None:
         mcp.add_tool(tool)
         logger.info(f"Registered read tool: {tool_func.__name__} [readOnlyHint=True]")
     
-    # Register write tools with destructiveHint annotation
-    # For now, register all write tools regardless of flag (T01 step 2)
-    # In future iterations, this can be made conditional
-    for tool_func in write_tools:
-        tool = Tool.from_function(tool_func, annotations=write_annotations)
-        mcp.add_tool(tool)
-        logger.info(f"Registered write tool: {tool_func.__name__} [destructiveHint=True]")
+    # Register write tools with destructiveHint annotation (only if enable_write is True)
+    registered_write_count = 0
+    if enable_write:
+        for tool_func in write_tools:
+            tool = Tool.from_function(tool_func, annotations=write_annotations)
+            mcp.add_tool(tool)
+            logger.info(f"Registered write tool: {tool_func.__name__} [destructiveHint=True]")
+            registered_write_count = len(write_tools)
+    else:
+        logger.info(f"Write tools disabled: {len(write_tools)} write tools not registered (use --enable-write-tools to enable)")
+        registered_write_count = 0
     
     _tools_registered = True
-    logger.info(f"Tool registration complete: {len(read_tools)} read tools, {len(write_tools)} write tools")
+    logger.info(f"Tool registration complete: {len(read_tools)} read tools, {registered_write_count} write tools")
 
 
 # =============================================================================
@@ -1169,7 +1184,7 @@ def parse_args() -> argparse.Namespace:
         "--enable-write-tools",
         action="store_true",
         default=False,
-        help="Enable write tools (not yet implemented)",
+        help="Enable write tools (4 additional tools for network modification)",
     )
 
     parser.add_argument(
@@ -1211,7 +1226,7 @@ def main():
         logger.info(f"HTTP server will bind to {args.host}:{args.port}")
 
     if args.enable_write_tools:
-        logger.warning("--enable-write-tools flag is set but write tools are not yet implemented")
+        logger.info("--enable-write-tools flag set: write tools will be registered")
 
     # Register tools before running the server
     register_tools(enable_write=args.enable_write_tools)

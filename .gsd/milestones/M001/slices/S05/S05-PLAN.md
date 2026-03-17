@@ -28,6 +28,7 @@
   4. Verifies write tools have `destructiveHint=True` (when enabled)
   5. Runs pytest test suite for safety layers (new tests)
 - `pytest tests/test_server.py -xvs` passes all tests (including new safety tests)
+- **Diagnostic check:** Run server and inspect logs for annotation hints (e.g., `Registered write tool: mist_update_wlan [destructiveHint=True]`) - this verifies the observability signal works
 
 ## Observability / Diagnostics
 
@@ -59,7 +60,7 @@
   - Verify: Write a test that checks tool annotations exist. Run `pytest tests/test_server.py -xvs` to confirm tests still pass.
   - Done when: All tools have appropriate annotations, and a new test verifies annotations are present.
 
-- [ ] **T03: Implement conditional write tool registration based on flag** `est:30m`
+- [x] **T03: Implement conditional write tool registration based on flag** `est:30m`
   - Why: Fulfill R008 and R009: write tools only registered when `--enable-write-tools` flag is set.
   - Files: `mist_mcp/server.py`, `tests/test_server.py`
   - Do: Modify `register_tools` to skip write tools when `enable_write=False`. Update `main()` to call `register_tools(args.enable_write_tools)` before `mcp.run()`. Remove the warning log about write tools not yet implemented.

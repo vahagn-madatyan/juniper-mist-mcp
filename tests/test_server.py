@@ -16,7 +16,7 @@ from typing import Any
 import pytest
 
 # Import register_tools for tests that verify tool registration
-from mist_mcp.server import register_tools
+from mist_mcp.server import register_tools, reset_tool_registration
 
 
 def send_jsonrpc_via_stdio(
@@ -1407,6 +1407,196 @@ def test_all_tools_have_annotations():
     # Verify all tools have annotations
     for tool_name, annotations in tool_annotations.items():
         assert annotations is not None, f"{tool_name} has no annotations"
+
+
+# =============================================================================
+# Tests for conditional write tool registration (T03)
+# =============================================================================
+
+
+def test_write_tools_not_registered_by_default():
+    """Test that write tools are NOT registered when enable_write=False.
+
+    Verifies that when register_tools is called with enable_write=False,
+    only the 10 read tools are registered and the 4 write tools are not.
+    This is the core safety feature: write tools disabled by default.
+    
+    Note: This test runs in a subprocess to ensure clean MCP state.
+    """
+    import subprocess
+    import sys
+    
+    # Run in subprocess to ensure clean MCP state
+    result = subprocess.run(
+        [
+            sys.executable, "-c",
+            """
+import asyncio
+from mist_mcp.server import mcp, register_tools, reset_tool_registration
+
+reset_tool_registration()
+register_tools(enable_write=False)
+
+async def check_tools():
+    tools = await mcp.list_tools()
+    return [t.name for t in tools]
+
+tool_names = asyncio.run(check_tools())
+
+# Verify only 10 tools are registered
+assert len(tool_names) == 10, f"Expected 10 tools, got {len(tool_names)}: {tool_names}"
+
+# Define write tools that should NOT be present
+write_tools = [
+    "mist_update_wlan",
+    "mist_manage_nac_rules",
+    "mist_manage_wxlan",
+    "mist_manage_security_policies",
+]
+
+# Verify write tools are NOT registered
+for tool_name in write_tools:
+    assert tool_name not in tool_names, f"Write tool {tool_name} should NOT be registered when enable_write=False"
+
+print("PASSED")
+"""
+        ],
+        capture_output=True,
+        text=True,
+        cwd=Path(__file__).parent.parent,
+    )
+    
+    assert result.returncode == 0, f"Subprocess test failed:\nSTDOUT: {result.stdout}\nSTDERR: {result.stderr}"
+    assert "PASSED" in result.stdout
+
+
+def test_write_tools_registered_with_flag():
+    """Test that write tools ARE registered when enable_write=True.
+
+    Verifies that when register_tools is called with enable_write=True,
+    all 14 tools (10 read + 4 write) are registered.
+    This ensures the --enable-write-tools flag works correctly.
+    
+    Note: This test runs in a subprocess to ensure clean MCP state.
+    """
+    import subprocess
+    import sys
+    
+    # Run in subprocess to ensure clean MCP state
+    result = subprocess.run(
+        [
+            sys.executable, "-c",
+            """
+import asyncio
+from mist_mcp.server import mcp, register_tools, reset_tool_registration
+
+reset_tool_registration()
+register_tools(enable_write=True)
+
+async def check_tools():
+    tools = await mcp.list_tools()
+    return [t.name for t in tools]
+
+tool_names = asyncio.run(check_tools())
+
+# Verify all 14 tools are registered
+assert len(tool_names) == 14, f"Expected 14 tools, got {len(tool_names)}: {tool_names}"
+
+# Define all expected tools (10 read + 4 write)
+expected_tools = [
+    # Read tools (10)
+    "mist_list_orgs",
+    "mist_get_device_stats",
+    "mist_get_sle_summary",
+    "mist_get_client_stats",
+    "mist_get_alarms",
+    "mist_get_site_events",
+    "mist_list_wlans",
+    "mist_get_rf_templates",
+    "mist_get_inventory",
+    "mist_get_device_config_cmd",
+    # Write tools (4)
+    "mist_update_wlan",
+    "mist_manage_nac_rules",
+    "mist_manage_wxlan",
+    "mist_manage_security_policies",
+]
+
+# Verify all tools are present
+for tool_name in expected_tools:
+    assert tool_name in tool_names, f"Tool {tool_name} should be registered when enable_write=True"
+
+print("PASSED")
+"""
+        ],
+        capture_output=True,
+        text=True,
+        cwd=Path(__file__).parent.parent,
+    )
+    
+    assert result.returncode == 0, f"Subprocess test failed:\nSTDOUT: {result.stdout}\nSTDERR: {result.stderr}"
+    assert "PASSED" in result.stdout
+
+
+def test_read_tools_have_readonly_hint_with_write_disabled():
+    """Test that read tools still have readOnlyHint when write tools disabled.
+
+    Verifies that even when write tools are not registered,
+    the read tools that are registered still have proper annotations.
+    
+    Note: This test runs in a subprocess to ensure clean MCP state.
+    """
+    import subprocess
+    import sys
+    
+    # Run in subprocess to ensure clean MCP state
+    result = subprocess.run(
+        [
+            sys.executable, "-c",
+            """
+import asyncio
+from mist_mcp.server import mcp, register_tools, reset_tool_registration
+
+reset_tool_registration()
+register_tools(enable_write=False)
+
+async def check_tool_annotations():
+    tools = await mcp.list_tools()
+    return {t.name: t.annotations for t in tools}
+
+tool_annotations = asyncio.run(check_tool_annotations())
+
+# Define expected read tools (10 tools)
+read_tools = [
+    "mist_list_orgs",
+    "mist_get_device_stats",
+    "mist_get_sle_summary",
+    "mist_get_client_stats",
+    "mist_get_alarms",
+    "mist_get_site_events",
+    "mist_list_wlans",
+    "mist_get_rf_templates",
+    "mist_get_inventory",
+    "mist_get_device_config_cmd",
+]
+
+# Verify each read tool has readOnlyHint=True
+for tool_name in read_tools:
+    assert tool_name in tool_annotations, f"{tool_name} not found in registered tools"
+    annotations = tool_annotations[tool_name]
+    assert annotations is not None, f"{tool_name} has no annotations"
+    assert annotations.readOnlyHint is True, f"{tool_name} missing readOnlyHint=True"
+
+print("PASSED")
+"""
+        ],
+        capture_output=True,
+        text=True,
+        cwd=Path(__file__).parent.parent,
+    )
+    
+    assert result.returncode == 0, f"Subprocess test failed:\nSTDOUT: {result.stdout}\nSTDERR: {result.stderr}"
+    assert "PASSED" in result.stdout
 
 
 if __name__ == "__main__":
