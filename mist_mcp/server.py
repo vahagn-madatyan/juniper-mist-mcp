@@ -761,6 +761,116 @@ async def mist_update_wlan(
     return serialize_api_response(response)
 
 
+@mcp.tool
+async def mist_manage_nac_rules(
+    ctx: Context,
+    org: str,
+    action: str,
+    rule_id: str | None = None,
+    body: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Manage NAC (802.1X) rules in an organization.
+
+    Creates, updates, or deletes NAC rules for network access control.
+    This is a write operation that modifies NAC configuration in Mist.
+
+    Actions:
+    - create: Create a new NAC rule (requires body, rule_id ignored)
+    - update: Update an existing NAC rule (requires both rule_id and body)
+    - delete: Delete a NAC rule (requires rule_id, body ignored)
+
+    Note: To get a list of NAC rules and their IDs, use the listOrgNacRules API
+    or check the Mist portal.
+
+    Args:
+        ctx: FastMCP context with lifespan data.
+        org: Organization name (must be configured in .env).
+        action: Action to perform - "create", "update", or "delete" (case-insensitive).
+        rule_id: NAC rule ID (UUID) for update/delete actions. Get this from listOrgNacRules.
+        body: Dictionary containing the NAC rule configuration.
+              Example: {"name": "Corporate NAC", "policy": {"type": "dot1x"}}
+
+    Returns:
+        Dict with status_code, error flag, data, and pagination info.
+
+    Raises:
+        ValueError: If action is invalid or required parameters are missing.
+    """
+    # Normalize action to lowercase for case-insensitive comparison
+    action_lower = action.lower()
+    valid_actions = ["create", "update", "delete"]
+
+    # Validate action parameter
+    if action_lower not in valid_actions:
+        raise ValueError(
+            f"Invalid action '{action}'. Must be one of: {valid_actions}"
+        )
+
+    # Validate required parameters per action
+    if action_lower == "create":
+        if body is None:
+            raise ValueError(
+                "Action 'create' requires 'body' parameter to be provided"
+            )
+    elif action_lower == "update":
+        if rule_id is None:
+            raise ValueError(
+                "Action 'update' requires 'rule_id' parameter to be provided"
+            )
+        if body is None:
+            raise ValueError(
+                "Action 'update' requires 'body' parameter to be provided"
+            )
+    elif action_lower == "delete":
+        if rule_id is None:
+            raise ValueError(
+                "Action 'delete' requires 'rule_id' parameter to be provided"
+            )
+
+    logger.info(f"Tool called: mist_manage_nac_rules(org={org}, action={action_lower}, rule_id={rule_id})")
+
+    lifespan_ctx = ctx.lifespan_context
+    session_manager = lifespan_ctx.get("session_manager")
+
+    if session_manager is None:
+        return {"error": True, "status_code": None, "data": "No session manager available"}
+
+    # Validate org
+    validate_org(org, session_manager)
+
+    # Get authenticated session
+    session = session_manager.get_session(org)
+
+    # Get org_id from org name
+    org_id = get_org_id(org, session)
+
+    # Import the nacrules function
+    from mistapi.api.v1.orgs import nacrules as org_nacrules
+
+    # Call the appropriate API method based on action
+    if action_lower == "create":
+        response = org_nacrules.createOrgNacRule(
+            session,
+            org_id,
+            body,
+        )
+    elif action_lower == "update":
+        response = org_nacrules.updateOrgNacRule(
+            session,
+            org_id,
+            rule_id,
+            body,
+        )
+    else:  # delete
+        response = org_nacrules.deleteOrgNacRule(
+            session,
+            org_id,
+            rule_id,
+        )
+
+    return serialize_api_response(response)
+
+
 # =============================================================================
 # CLI and Server Entry Point
 # =============================================================================

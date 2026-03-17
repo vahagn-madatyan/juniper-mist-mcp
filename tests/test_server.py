@@ -805,5 +805,156 @@ def test_mist_update_wlan_valid_org():
     validate_org("acme_corp", session_manager)
 
 
+def test_mist_manage_nac_rules_signature():
+    """Test that mist_manage_nac_rules tool exists and is callable."""
+    import asyncio
+    from mist_mcp.server import mcp
+
+    async def check_tools():
+        tools = await mcp.list_tools()
+        return [t.name for t in tools]
+
+    tool_names = asyncio.run(check_tools())
+    assert "mist_manage_nac_rules" in tool_names
+
+
+def test_mist_manage_nac_rules_invalid_org():
+    """Test that mist_manage_nac_rules validates org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    with pytest.raises(ValueError) as exc_info:
+        validate_org("fake_nac_rules_org", session_manager)
+
+    assert "not configured" in str(exc_info.value).lower()
+
+
+def test_mist_manage_nac_rules_valid_org():
+    """Test that mist_manage_nac_rules accepts valid org parameter."""
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    from mist_mcp.server import validate_org
+    validate_org("example_org", session_manager)
+    validate_org("acme_corp", session_manager)
+
+
+def test_mist_manage_nac_rules_invalid_action():
+    """Test that mist_manage_nac_rules validates action parameter."""
+    from unittest.mock import MagicMock
+    from mist_mcp.server import mist_manage_nac_rules
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+    import asyncio
+
+    # Setup mock context and session manager
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    # Create a mock context
+    mock_ctx = MagicMock()
+    mock_ctx.lifespan_context = {
+        "config": config,
+        "session_manager": session_manager,
+    }
+
+    # Test invalid action raises ValueError
+    with pytest.raises(ValueError) as exc_info:
+        asyncio.run(mist_manage_nac_rules(mock_ctx, org="example_org", action="invalid"))
+
+    assert "invalid action" in str(exc_info.value).lower()
+
+
+def test_mist_manage_nac_rules_create_requires_body():
+    """Test that mist_manage_nac_rules requires body for create action."""
+    from unittest.mock import MagicMock
+    from mist_mcp.server import mist_manage_nac_rules
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+    import asyncio
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    mock_ctx = MagicMock()
+    mock_ctx.lifespan_context = {
+        "config": config,
+        "session_manager": session_manager,
+    }
+
+    # Test create without body raises ValueError
+    with pytest.raises(ValueError) as exc_info:
+        asyncio.run(mist_manage_nac_rules(mock_ctx, org="example_org", action="create"))
+
+    assert "create" in str(exc_info.value).lower() and "body" in str(exc_info.value).lower()
+
+
+def test_mist_manage_nac_rules_update_requires_rule_id_and_body():
+    """Test that mist_manage_nac_rules requires rule_id and body for update action."""
+    from unittest.mock import MagicMock
+    from mist_mcp.server import mist_manage_nac_rules
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+    import asyncio
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    mock_ctx = MagicMock()
+    mock_ctx.lifespan_context = {
+        "config": config,
+        "session_manager": session_manager,
+    }
+
+    # Test update without rule_id raises ValueError
+    with pytest.raises(ValueError) as exc_info:
+        asyncio.run(mist_manage_nac_rules(mock_ctx, org="example_org", action="update", body={}))
+
+    assert "rule_id" in str(exc_info.value).lower()
+
+    # Test update without body raises ValueError
+    with pytest.raises(ValueError) as exc_info:
+        asyncio.run(mist_manage_nac_rules(mock_ctx, org="example_org", action="update", rule_id="some-id"))
+
+    assert "body" in str(exc_info.value).lower()
+
+
+def test_mist_manage_nac_rules_delete_requires_rule_id():
+    """Test that mist_manage_nac_rules requires rule_id for delete action."""
+    from unittest.mock import MagicMock
+    from mist_mcp.server import mist_manage_nac_rules
+    from mist_mcp.config import Config
+    from mist_mcp.session import MistSessionManager
+    from pathlib import Path
+    import asyncio
+
+    config = Config(env_file=Path(__file__).parent.parent / ".env")
+    session_manager = MistSessionManager(config)
+
+    mock_ctx = MagicMock()
+    mock_ctx.lifespan_context = {
+        "config": config,
+        "session_manager": session_manager,
+    }
+
+    # Test delete without rule_id raises ValueError
+    with pytest.raises(ValueError) as exc_info:
+        asyncio.run(mist_manage_nac_rules(mock_ctx, org="example_org", action="delete"))
+
+    assert "rule_id" in str(exc_info.value).lower()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

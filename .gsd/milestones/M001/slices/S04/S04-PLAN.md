@@ -44,7 +44,7 @@
   - Do: Implement `mist_update_wlan` tool using `mistapi.api.v1.orgs.wlans.updateOrgWlan`. Accept org, wlan_id, body parameters. Validate org, get session, get org_id, call API, serialize response. Add comprehensive tests including mock API calls.
   - Verify: `pytest tests/test_server.py::test_mist_update_wlan_signature -v` passes; tool appears in registered tools list.
   - Done when: Tool is registered and tests pass.
-- [ ] **T02: NAC rules management tool** `est:45m`
+- [x] **T02: NAC rules management tool** `est:45m`
   - Why: Implement multi-action write tool pattern (create/update/delete)
   - Files: `mist_mcp/server.py`, `tests/test_server.py`
   - Do: Implement `mist_manage_nac_rules` tool using `mistapi.api.v1.orgs.nacrules` methods. Accept org, action, rule_id (optional), body (optional). Validate action is one of ["create","update","delete"], enforce required parameters (rule_id for update/delete, body for create/update). Add helper function for action validation if needed. Add tests for all three actions.
