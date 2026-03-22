@@ -1,5 +1,13 @@
 # Juniper Mist MCP Server
 
+> **⚠️ Juniper now offers an official MCP server for Mist.**
+>
+> Juniper has released their own MCP server at **https://mcp.ai.juniper.net/mcp/mist** with native integration for Claude Desktop.
+>
+> **We recommend using the official upstream server instead of this project.** See the [Juniper Mist MCP documentation](https://www.juniper.net/documentation/us/en/software/mist/mist-aiops/shared-content/topics/concept/juniper-mist-mcp-claude.html) for setup instructions.
+>
+> This community project remains available for use cases that require multi-org MSP routing, write tools, or HTTP transport — features not yet covered by the upstream server. However, for standard single-org monitoring and troubleshooting, the official server is the better choice going forward.
+
 MCP server for managing Juniper Mist networks with AI assistants. Monitor, troubleshoot, and configure customer networks through natural language — built for MSPs managing multiple organizations across regions.
 
 **Input:** Natural language via Claude Desktop (or any MCP client)
